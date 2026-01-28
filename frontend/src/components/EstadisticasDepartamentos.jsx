@@ -78,7 +78,7 @@ const EstadisticasDepartamentos = () => {
       <CardContent>
         <div className="w-full mx-auto">
           <Tabs defaultValue="semanal" className="w-full">
-            <div className='flex justify-between items-center'>
+            <div className='flex lg:justify-between  flex-col lg:flex-row gap-4 items-center'>
               <h2 className="text-sm font-bold uppercase text-slate-800 text-nowrap">Estadísticas departamentos</h2>
               <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="semanal">SEMANAL</TabsTrigger>

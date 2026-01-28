@@ -20,7 +20,7 @@ export const Layout = ({ children }) => {
   return (
     <div>
       <Header />
-      <div className='mx-auto container mt-6'>
+      <div className='mx-auto container mt-6 px-4'>
         {children}
       </div>
     </div>

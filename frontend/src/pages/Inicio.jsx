@@ -30,7 +30,7 @@ export const Inicio = () => {
   return (
     <Layout>
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="uppercase text-slate-600 text-md">Tecnicos registrados</CardTitle>
             <CardDescription className="text-xl text-primary font-bold uppercase">
@@ -38,7 +38,7 @@ export const Inicio = () => {
             </CardDescription>
           </CardHeader>
         </Card>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="uppercase text-slate-600 text-md">Soportes registrados</CardTitle>
             <CardDescription className="text-xl text-primary font-bold uppercase">
@@ -46,7 +46,7 @@ export const Inicio = () => {
             </CardDescription>
           </CardHeader>
         </Card>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="uppercase text-slate-600 text-md">departamentos mas visitado</CardTitle>
             <CardDescription className="text-xl text-primary font-bold uppercase">
@@ -54,7 +54,7 @@ export const Inicio = () => {
             </CardDescription>
           </CardHeader>
         </Card>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="uppercase text-slate-600 text-md">Soporte Master</CardTitle>
             <CardDescription className="text-xl text-primary font-bold uppercase">

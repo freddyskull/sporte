@@ -26,9 +26,9 @@ export const Header = () => {
 
   return (
     <div className="shadow-md bg-white">
-      <div className='container mx-auto flex justify-between items-center py-4'>
+      <div className='container mx-auto flex-col gap-4 lg:flex-row flex justify-between items-center py-4 px-4'>
         <div>
-          <img src="/logo.webp" width={150} alt="Logo" />
+          <img src="/logo.webp" className='w-52 md:w-42' alt="Logo" />
         </div>
         <nav>
           <ul className='flex gap-4'>
