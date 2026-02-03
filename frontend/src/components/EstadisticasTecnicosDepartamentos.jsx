@@ -3,7 +3,7 @@ import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Responsi
 import useHistorialStore from '../stores/historialStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
-const EstadisticasTecnicosDepartamentos = ({ selectedTecnico }) => {
+const EstadisticasTecnicosDepartamentos = ({ selectedTecnico, selectedYear, selectedMonth }) => {
   const { historial, fetchHistorial } = useHistorialStore()
   const [chartData, setChartData] = useState([])
 
@@ -15,13 +15,31 @@ const EstadisticasTecnicosDepartamentos = ({ selectedTecnico }) => {
     if (selectedTecnico && historial.length) {
       processData(selectedTecnico)
     }
-  }, [selectedTecnico, historial])
+  }, [selectedTecnico, historial, selectedYear, selectedMonth])
+
+  const filterByDate = (historialData) => {
+    if (selectedYear === 'all') return historialData
+
+    return historialData.filter(h => {
+      if (!h.fecha_soporte) return false
+
+      const date = new Date(h.fecha_soporte)
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1
+
+      if (year !== parseInt(selectedYear)) return false
+      if (selectedMonth !== 'all' && month !== parseInt(selectedMonth)) return false
+
+      return true
+    })
+  }
 
   const processData = (tecnicoId) => {
+    const filteredHistorial = filterByDate(historial)
     const departamentoCount = {}
     let maxVal = 0
 
-    historial.forEach(h => {
+    filteredHistorial.forEach(h => {
       const tecnicosAsociados = h.expand?.tecnicos_asociados || []
       const isTecnicoInSupport = tecnicosAsociados.some(t => t.id === tecnicoId)
 
