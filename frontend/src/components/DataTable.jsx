@@ -35,6 +35,15 @@ import {
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 import DataForm from './DataForm'
 
@@ -124,6 +133,33 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
     setDialogOpen(false)
   }
 
+  const getPageNumbers = () => {
+    const totalPages = table.getPageCount()
+    const currentPage = table.getState().pagination.pageIndex
+    const pageNumbers = []
+
+    if (totalPages <= 7) {
+      for (let i = 0; i < totalPages; i++) {
+        pageNumbers.push(i)
+      }
+    } else {
+      pageNumbers.push(0)
+      if (currentPage > 2) {
+        pageNumbers.push('ellipsis-start')
+      }
+      const start = Math.max(1, currentPage - 1)
+      const end = Math.min(totalPages - 2, currentPage + 1)
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i)
+      }
+      if (currentPage < totalPages - 3) {
+        pageNumbers.push('ellipsis-end')
+      }
+      pageNumbers.push(totalPages - 1)
+    }
+    return pageNumbers
+  }
+
 
   return (
     <Card>
@@ -146,7 +182,7 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className="text-lg font-medium text-slate-800">
+                <DialogTitle className="text-lg font-medium text-foreground">
                   {mode === 'create' ? 'Crear Nuevo' : 'Editar'}
                 </DialogTitle>
                 <DialogDescription>
@@ -177,7 +213,7 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className={`px-4 uppercase font-bold text-slate-600 py-2 ${header.id === 'actions' ? 'text-right' : 'text-left'
+                      className={`px-4 uppercase font-bold text-muted-foreground py-2 ${header.id === 'actions' ? 'text-right' : 'text-left'
                         }`}
                     >
                       {header.isPlaceholder
@@ -213,23 +249,62 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
           </table>
         </div>
 
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Siguiente
-          </Button>
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">Filas por página</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value))
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={table.getState().pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => table.previousPage()}
+                    className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+
+                {getPageNumbers().map((pageIndex, index) => (
+                  <PaginationItem key={index}>
+                    {pageIndex === 'ellipsis-start' || pageIndex === 'ellipsis-end' ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        isActive={table.getState().pagination.pageIndex === pageIndex}
+                        onClick={() => table.setPageIndex(pageIndex)}
+                        className="cursor-pointer"
+                      >
+                        {pageIndex + 1}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => table.nextPage()}
+                    className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </div>
       </CardContent >
     </Card >

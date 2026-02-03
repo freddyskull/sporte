@@ -90,7 +90,7 @@ const NuevoSoporteDialog = ({ className, children }) => {
       // Ensure date is properly formatted as a full datetime
       const formattedData = { ...data }
       if (formattedData.fecha_soporte) {
-        formattedData.fecha_soporte = new Date(formattedData.fecha_soporte).toISOString()
+        formattedData.fecha_soporte = new Date(formattedData.fecha_soporte + 'T12:00:00').toISOString()
       }
       await createHistorial(formattedData)
       setOpen(false)

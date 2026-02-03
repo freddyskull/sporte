@@ -48,7 +48,7 @@ export const SearchableSelect = ({ value, options, onSelect, placeholder }) => {
                     onSelect(option.value === value ? "" : option.value)
                     setOpen(false)
                   }}
-                  className="uppercase font-bold text-slate-600"
+                  className="uppercase font-bold text-foreground"
                 >
                   <Check
                     className={cn(

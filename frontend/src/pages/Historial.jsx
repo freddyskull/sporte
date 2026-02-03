@@ -23,7 +23,7 @@ const columns = [
   {
     accessorKey: 'asunto', header: 'Asunto',
     cell: ({ getValue }) => (
-      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-blue-200 uppercase text-nowrap overflow-hidden h-[20px] max-w-[100px] line-clamp-1" title={getValue()}>
+      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap overflow-hidden h-[20px] line-clamp-1" title={getValue()}>
         {getValue()}
       </div>
     )
@@ -89,40 +89,92 @@ const columns = [
     accessorKey: 'fecha_soporte',
     header: 'Fecha soporte',
     cell: ({ getValue }) => {
-      // 1. Formateamos la fecha
-      const date = new Date(getValue()).toLocaleDateString('es-ES', {
+      const rawValue = getValue()
+      if (!rawValue) return <span className="text-xs">N/A</span>
+
+      // Parse manually to avoid timezone shifts (UTC vs Local)
+      // Expecting standard ISO string or YYYY-MM-DD (with T or space separator)
+      const datePart = String(rawValue).split(/[T ]/)[0]
+      const [year, month, day] = datePart.split('-').map(Number)
+
+      // Create date in LOCAL time (browser's timezone) using components
+      // new Date(year, monthIndex, day)
+      // Note: month is 0-indexed in JS Date
+      const localDate = new Date(year, month - 1, day)
+
+      const formattedDate = localDate.toLocaleDateString('es-ES', {
         day: '2-digit',
-        month: 'short', // 'short' dará "ene", "feb", etc.
+        month: 'short',
         year: '2-digit',
       })
 
-      // 2. Retornamos el Badge con Tailwind
+      // Retornamos el Badge con Tailwind
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-blue-200 uppercase text-nowrap">
-          {date}
+        <span
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap"
+          title={`Raw: ${rawValue} | Parsed: ${localDate.toString()}`}
+        >
+          {formattedDate}
         </span>
       )
     },
   },
-  {
-    accessorKey: 'created',
-    header: 'creación',
-    cell: ({ getValue }) => {
-      // 1. Formateamos la fecha
-      const date = new Date(getValue()).toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: 'short', // 'short' dará "ene", "feb", etc.
-        year: '2-digit',
-      })
+  // {
+  //   accessorKey: 'created',
+  //   header: 'creación',
+  //   cell: ({ getValue }) => {
+  //     // 1. Formateamos la fecha
+  //     const date = new Date(getValue()).toLocaleDateString('es-ES', {
+  //       day: '2-digit',
+  //       month: 'short', // 'short' dará "ene", "feb", etc.
+  //       year: '2-digit',
+  //     })
 
-      // 2. Retornamos el Badge con Tailwind
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-blue-200 uppercase text-nowrap">
-          {date}
-        </span>
-      )
-    },
-  },
+  //     // 2. Retornamos el Badge con Tailwind
+  //     return (
+  //       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap">
+  //         {date}
+  //       </span>
+  //     )
+  //   },
+  // },
+]
+
+import { EditableCell } from '@/components/EditableCell'
+
+// Keep arrays as static constants outside if they don't depend on state
+const monthOptions = [
+  { value: '0', label: 'Enero' },
+  { value: '1', label: 'Febrero' },
+  { value: '2', label: 'Marzo' },
+  { value: '3', label: 'Abril' },
+  { value: '4', label: 'Mayo' },
+  { value: '5', label: 'Junio' },
+  { value: '6', label: 'Julio' },
+  { value: '7', label: 'Agosto' },
+  { value: '8', label: 'Septiembre' },
+  { value: '9', label: 'Octubre' },
+  { value: '10', label: 'Noviembre' },
+  { value: '11', label: 'Diciembre' },
+]
+
+const asuntoOptions = [
+  { value: 'soporte técnico', label: 'Soporte técnico' },
+  { value: 'soporte ofimático', label: 'Soporte ofimático' },
+  { value: 'falla del saad', label: 'Falla del SAAD' },
+  { value: 'falla de conexión', label: 'Falla de conexión' },
+  { value: 'falla de internet', label: 'Falla de internet' },
+  { value: 'falla de red', label: 'Falla de red' },
+  { value: 'mantenimiento correctivo', label: 'Mantenimiento Correctivo' },
+  { value: 'mantenimiento preventivo', label: 'Mantenimiento Preventivo' },
+  { value: 'cableado estructurado', label: 'Cableado Estructurado' },
+  { value: 'soporte de red', label: 'Soporte de red' },
+]
+
+const statusOptions = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'en progreso', label: 'En Progreso' },
+  { value: 'resuelto', label: 'Resuelto' },
 ]
 
 const fields = [
@@ -130,28 +182,13 @@ const fields = [
     key: 'asunto',
     label: 'Asunto',
     type: 'select',
-    options: [
-      { value: 'soporte técnico', label: 'Soporte técnico' },
-      { value: 'soporte ofimático', label: 'Soporte ofimático' },
-      { value: 'falla del saad', label: 'Falla del SAAD' },
-      { value: 'falla de conexión', label: 'Falla de conexión' },
-      { value: 'falla de internet', label: 'Falla de internet' },
-      { value: 'falla de red', label: 'Falla de red' },
-      { value: 'mantenimiento correctivo', label: 'Mantenimiento Correctivo' },
-      { value: 'mantenimiento preventivo', label: 'Mantenimiento Preventivo' },
-      { value: 'cableado estructurado', label: 'Cableado Estructurado' },
-      { value: 'soporte de red', label: 'Soporte de red' },
-    ],
+    options: asuntoOptions,
   },
   {
     key: 'status',
     label: 'Status',
     type: 'select',
-    options: [
-      { value: 'pendiente', label: 'Pendiente' },
-      { value: 'en progreso', label: 'En Progreso' },
-      { value: 'resuelto', label: 'Resuelto' },
-    ],
+    options: statusOptions,
   },
   { key: 'descripcion_problema', label: 'Descripción del Problema', type: 'textarea', optional: true },
   {
@@ -187,7 +224,7 @@ export const Historial = () => {
     const uniqueYears = new Set(
       historial
         .filter(h => h.fecha_soporte)
-        .map(h => new Date(h.fecha_soporte).getFullYear())
+        .map(h => parseInt(String(h.fecha_soporte).split(/[T ]/)[0].split('-')[0])) // Safe year extraction
     )
     return Array.from(uniqueYears).sort((a, b) => b - a)
   }, [historial])
@@ -195,14 +232,14 @@ export const Historial = () => {
   // Filter Logic
   const filteredHistorial = React.useMemo(() => {
     return historial.filter(item => {
-      const itemDate = new Date(item.fecha_soporte)
+      // Robust parsing: utilize the date string components directly to creating local date
+      if (!item.fecha_soporte) return false
+      const [yVal, mVal, dVal] = String(item.fecha_soporte).split(/[T ]/)[0].split('-').map(Number)
+      const itemDate = new Date(yVal, mVal - 1, dVal) // Local midnight
 
       // 1. Date Range
       if (startDate && new Date(startDate) > itemDate) return false
       if (endDate) {
-        // Create end date object set to end of that day (or simpler: just compare strings if ISO)
-        // Since input is YYYY-MM-DD, comparison with itemDate (ISO full) needs care.
-        // Let's assume itemDate includes time.
         const eDate = new Date(endDate)
         eDate.setHours(23, 59, 59, 999)
         if (eDate < itemDate) return false
@@ -214,30 +251,19 @@ export const Historial = () => {
       }
 
       // 3. Month Range
-      // Month in JS is 0-11
       const m = itemDate.getMonth()
       let sM = startMonth === 'all' ? 0 : parseInt(startMonth)
       let eM = endMonth === 'all' ? 11 : parseInt(endMonth)
 
-      // Handle wrap-around if start > end? Usually Range is Start <= End.
-      // If user puts Start: Dec, End: Jan, maybe invalid? Let's assume simple range.
       if (startMonth !== 'all' && endMonth !== 'all') {
         if (sM <= eM) {
           if (m < sM || m > eM) return false
         } else {
-          // If Start > End (e.g. Nov to Feb across year boundary?), 
-          // but Year filter might conflict. 
-          // Let's logic: if sM > eM, allow m >= sM OR m <= eM
           if (!(m >= sM || m <= eM)) return false
         }
       } else if (startMonth !== 'all') {
-        // If only start specified, assume "from this month onwards"? 
-        // Or strictly "equal"? User said "range".
-        // Let's treat singular selection as "Start Month" to "End of Year" if End is All?
-        // Or just "month >= startMonth"
         if (m < sM) return false
       } else if (endMonth !== 'all') {
-        // If only end specified
         if (m > eM) return false
       }
 
@@ -253,23 +279,193 @@ export const Historial = () => {
     setEndMonth('all')
   }
 
-  const months = [
-    { value: '0', label: 'Enero' },
-    { value: '1', label: 'Febrero' },
-    { value: '2', label: 'Marzo' },
-    { value: '3', label: 'Abril' },
-    { value: '4', label: 'Mayo' },
-    { value: '5', label: 'Junio' },
-    { value: '6', label: 'Julio' },
-    { value: '7', label: 'Agosto' },
-    { value: '8', label: 'Septiembre' },
-    { value: '9', label: 'Octubre' },
-    { value: '10', label: 'Noviembre' },
-    { value: '11', label: 'Diciembre' },
-  ]
-
   const departamentoOptions = departamentos.map(d => ({ value: d.id, label: d.nombre }))
   const tecnicoOptions = tecnicos.map(t => ({ value: t.id, label: t.nombre }))
+
+  // Define columns INSIDE component to access Store data and options
+  const columns = React.useMemo(() => [
+    {
+      accessorKey: 'asunto', header: 'Asunto',
+      cell: ({ getValue, row }) => (
+        <EditableCell
+          value={getValue()}
+          id={row.original.id}
+          field="asunto"
+          type="select"
+          options={asuntoOptions}
+          onSave={updateHistorial}
+        >
+          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap overflow-hidden h-[20px] line-clamp-1" title={getValue()}>
+            {getValue()}
+          </div>
+        </EditableCell>
+      )
+    },
+    {
+      accessorKey: 'status', header: 'Status',
+      cell: ({ getValue, row }) => (
+        <EditableCell
+          value={getValue()}
+          id={row.original.id}
+          field="status"
+          type="select"
+          options={statusOptions}
+          onSave={updateHistorial}
+        >
+          <div
+            className={
+              `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border uppercase text-nowrap
+                    ${getValue() === 'pendiente' && 'bg-yellow-100 text-yellow-800 border-yellow-200'}
+                    ${getValue() === 'en progreso' && 'bg-green-100 text-green-800 border-green-200'}
+                    ${getValue() === 'resuelto' && 'bg-blue-100 text-blue-800 border-blue-200'}
+                    `
+            }
+            title={getValue()}>
+            {getValue()}
+          </div>
+        </EditableCell>
+      )
+    },
+    {
+      accessorKey: 'descripcion_problema', header: 'Descripción',
+      cell: ({ getValue, row }) => (
+        <EditableCell
+          value={getValue()}
+          id={row.original.id}
+          field="descripcion_problema"
+          type="textarea"
+          onSave={updateHistorial}
+        >
+          <div className="max-w-xs line-clamp-1 text-xs" title={getValue()}>
+            {getValue() || 'N/A'}
+          </div>
+        </EditableCell>
+      )
+    },
+    {
+      id: 'tecnicos_asociados',
+      header: 'Técnicos Asociados',
+      cell: ({ row }) => {
+        const tecnicos = row.original.expand?.tecnicos_asociados || []
+        // Value for editing is array of Ids
+        const rawValue = row.original.tecnicos_asociados || []
+
+        return (
+          <EditableCell
+            value={rawValue}
+            id={row.original.id}
+            field="tecnicos_asociados"
+            type="multi-select"
+            options={tecnicoOptions}
+            onSave={updateHistorial}
+          >
+            {tecnicos.length ? (
+              <div className="flex flex-wrap gap-1">
+                {tecnicos.map((t) => (
+                  <Badge key={t.id} variant="secondary">
+                    {t.nombre}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <span className='text-xs'>N/A</span>
+            )}
+          </EditableCell>
+        )
+      },
+    },
+    {
+      id: 'departamento',
+      header: 'Departamento',
+      cell: ({ row }) => {
+        const departamento = row.original.expand?.departamento
+        // Value for editing is ID
+        const rawValue = row.original.departamento
+
+        return (
+          <EditableCell
+            value={rawValue}
+            id={row.original.id}
+            field="departamento"
+            type="searchable-select"
+            options={departamentoOptions}
+            onSave={updateHistorial}
+          >
+            {departamento ? (
+              <Badge variant="outline">
+                {departamento.nombre}
+              </Badge>
+            ) : (
+              <span className='text-xs'>N/A</span>
+            )}
+          </EditableCell>
+        )
+      }
+    },
+
+    {
+      accessorKey: 'fecha_soporte',
+      header: 'Fecha soporte',
+      cell: ({ getValue, row }) => {
+        const rawValue = getValue()
+
+        // Display logic
+        let content = <span className="text-xs">N/A</span>
+        if (rawValue) {
+          // Parse manually to avoid timezone shifts (UTC vs Local)
+          const datePart = String(rawValue).split(/[T ]/)[0]
+          const [year, month, day] = datePart.split('-').map(Number)
+          const localDate = new Date(year, month - 1, day)
+
+          const formattedDate = localDate.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          })
+
+          content = (
+            <span
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap"
+              title={`Raw: ${rawValue}`}
+            >
+              {formattedDate}
+            </span>
+          )
+        }
+
+        return (
+          <EditableCell
+            value={rawValue}
+            id={row.original.id}
+            field="fecha_soporte"
+            type="date"
+            onSave={updateHistorial}
+          >
+            {content}
+          </EditableCell>
+        )
+      },
+    },
+    // {
+    //   accessorKey: 'created',
+    //   header: 'creación',
+    //   cell: ({ getValue }) => {
+    //     // Read-only
+    //     if (!getValue()) return 'N/A'
+    //     const date = new Date(getValue()).toLocaleDateString('es-ES', {
+    //       day: '2-digit',
+    //       month: 'short',
+    //       year: '2-digit',
+    //     })
+
+    //     return (
+    //       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap">
+    //         {date}
+    //       </span>
+    //     )
+    //   },
+    // },
+  ], [asuntoOptions, statusOptions, departamentoOptions, tecnicoOptions, updateHistorial])
 
   const today = new Date()
   const localToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
@@ -301,9 +497,9 @@ export const Historial = () => {
         </div>
 
         {showFilters && (
-          <Card className="bg-white animate-in fade-in duration-300">
+          <Card className="bg-card animate-in fade-in duration-300">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium uppercase text-slate-500">Filtros Avanzados</CardTitle>
+              <CardTitle className="text-sm font-medium uppercase text-muted-foreground">Filtros Avanzados</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
@@ -314,7 +510,7 @@ export const Historial = () => {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -323,7 +519,7 @@ export const Historial = () => {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="bg-white"
+                    className="bg-background"
                   />
                 </div>
 
@@ -331,7 +527,7 @@ export const Historial = () => {
                 <div className="flex flex-col gap-2">
                   <Label className="text-xs">Año</Label>
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -347,12 +543,12 @@ export const Historial = () => {
                 <div className="flex flex-col gap-2">
                   <Label className="text-xs">Mes Inicio</Label>
                   <Select value={startMonth} onValueChange={setStartMonth}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {months.map(m => (
+                      {monthOptions.map(m => (
                         <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -361,12 +557,12 @@ export const Historial = () => {
                 <div className="flex flex-col gap-2">
                   <Label className="text-xs">Mes Fin</Label>
                   <Select value={endMonth} onValueChange={setEndMonth}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      {months.map(m => (
+                      {monthOptions.map(m => (
                         <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -402,19 +598,16 @@ export const Historial = () => {
         columns={columns}
         fields={dynamicFields}
         onCreate={(data) => {
-          // Ensure date is properly formatted as a full datetime
           const formattedData = { ...data }
           if (formattedData.fecha_soporte) {
-            // Append time to ensure it effectively sets the date to the beginning of that day (or noon to avoid timezone shifts)
-            formattedData.fecha_soporte = new Date(formattedData.fecha_soporte).toISOString()
+            formattedData.fecha_soporte = new Date(formattedData.fecha_soporte + 'T12:00:00').toISOString()
           }
           createHistorial(formattedData)
         }}
         onUpdate={(id, data) => {
-          // Ensure date is properly formatted as a full datetime
           const formattedData = { ...data }
           if (formattedData.fecha_soporte) {
-            formattedData.fecha_soporte = new Date(formattedData.fecha_soporte).toISOString()
+            formattedData.fecha_soporte = new Date(formattedData.fecha_soporte + 'T12:00:00').toISOString()
           }
           updateHistorial(id, formattedData)
         }}
@@ -423,3 +616,4 @@ export const Historial = () => {
     </Layout>
   )
 }
+

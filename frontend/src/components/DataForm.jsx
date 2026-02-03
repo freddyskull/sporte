@@ -47,7 +47,7 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, submitLabel = 
     <form onSubmit={handleSubmit} className="space-y-4">
       {fields.map((field) => (
         <div key={field.key}>
-          <Label htmlFor={field.key} className="block mb-2 text-slate-600">
+          <Label htmlFor={field.key} className="block mb-2 text-foreground">
             {field.label}
           </Label>
           {field.type === 'select' ? (
@@ -60,7 +60,7 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, submitLabel = 
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="uppercase font-bold text-slate-600">
+                  <SelectItem key={option.value} value={option.value} className="uppercase font-bold text-foreground">
                     {option.label}
                   </SelectItem>
                 ))}
@@ -107,7 +107,7 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, submitLabel = 
                           handleInputChange(field.key, newSelected)
                         }}
                       />
-                      <Label className="uppercase font-bold text-slate-600" htmlFor={option.value}>{option.label}</Label>
+                      <Label className="uppercase font-bold text-foreground" htmlFor={option.value}>{option.label}</Label>
                     </div>
                   ))}
                 </div>

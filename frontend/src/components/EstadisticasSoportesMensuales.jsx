@@ -10,12 +10,12 @@ const CustomTooltip = ({ active, payload, label }) => {
     const data = payload[0].payload
     return (
       <div className="bg-slate-950/90 text-slate-50 p-4 rounded-xl shadow-2xl text-xs border border-slate-800 backdrop-blur-sm relative z-50">
-        <p className="font-bold mb-2 text-base capitalize flex items-center gap-2">
+        <p className="font-bold mb-2 text-base capitalize flex items-center gap-2 uppercase">
           {data.fullName || data.name}
         </p>
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-slate-300 flex items-center gap-1.5">
+            <span className="text-white flex items-center gap-1.5">
               <Users size={14} /> Total Soportes
             </span>
             <span className="font-bold text-white text-base">{data.soportes}</span>
@@ -25,13 +25,13 @@ const CustomTooltip = ({ active, payload, label }) => {
             <div className="pt-3 border-t border-slate-800">
               <div className="flex items-center gap-2 mb-1.5">
                 <Trophy size={14} className="text-yellow-500" />
-                <span className="uppercase text-[10px] tracking-wider text-slate-400 font-bold">Técnico con más soportes</span>
+                <span className="uppercase text-[10px] tracking-wider text-white font-bold">Técnico con más soportes</span>
               </div>
               <div className="flex items-center justify-between gap-4 pl-0.5">
-                <span className="font-medium text-blue-400 text-sm truncate max-w-[120px]" title={data.topTecnico}>
+                <span className="font-medium text-white text-sm truncate max-w-[120px] uppercase" title={data.topTecnico}>
                   {data.topTecnico}
                 </span>
-                <span className="text-slate-400 text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                <span className="text-white text-xs bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 uppercase">
                   {data.topTecnicoCount} soportes
                 </span>
               </div>
@@ -163,7 +163,7 @@ const EstadisticasSoportesMensuales = () => {
     <Card className="col-span-1 md:col-span-2 w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col space-y-1.5">
-          <CardTitle className="uppercase text-slate-600 text-md uppercase font-bold">Soportes Mensuales</CardTitle>
+          <CardTitle className="uppercase text-foreground text-md uppercase font-bold">Soportes Mensuales</CardTitle>
         </div>
         {availableYears.length > 0 && (
           <Select value={selectedYear} onValueChange={setSelectedYear}>

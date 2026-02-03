@@ -100,7 +100,7 @@ const EstadisticasTecnicos = () => {
         <div className="w-full lg:mx-auto">
           <Tabs defaultValue="semanal" className="">
             <div className='flex lg:justify-between  flex-col lg:flex-row  gap-4 items-center'>
-              <h2 className="text-sm font-bold text-nowrap uppercase text-slate-800">Estadísticas de Técnicos</h2>
+              <h2 className="text-sm font-bold text-nowrap uppercase text-foreground">Estadísticas de Técnicos</h2>
               <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
                 <TabsTrigger value="mensual">MENSUAL</TabsTrigger>

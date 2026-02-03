@@ -86,7 +86,9 @@ const useHistorialStore = create((set, get) => ({
     console.log("Creating historial with data:", data);
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection("historial").create(data);
+      const record = await pb.collection("historial").create(data, {
+        expand: "departamento,tecnicos_asociados",
+      });
       set((state) => ({
         historial: [record, ...state.historial],
         loading: false,
@@ -107,7 +109,9 @@ const useHistorialStore = create((set, get) => ({
     console.log("Updating historial with data:", data);
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection("historial").update(id, data);
+      const record = await pb.collection("historial").update(id, data, {
+        expand: "departamento,tecnicos_asociados",
+      });
       set((state) => ({
         historial: state.historial.map((h) => (h.id === id ? record : h)),
         loading: false,
