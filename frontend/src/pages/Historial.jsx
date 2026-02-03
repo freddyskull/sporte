@@ -161,9 +161,8 @@ const monthOptions = [
 const asuntoOptions = [
   { value: 'soporte técnico', label: 'Soporte técnico' },
   { value: 'soporte ofimático', label: 'Soporte ofimático' },
+  { value: 'soporte impresora', label: 'Soporte impresora' },
   { value: 'falla del saad', label: 'Falla del SAAD' },
-  { value: 'falla de conexión', label: 'Falla de conexión' },
-  { value: 'falla de internet', label: 'Falla de internet' },
   { value: 'falla de red', label: 'Falla de red' },
   { value: 'mantenimiento correctivo', label: 'Mantenimiento Correctivo' },
   { value: 'mantenimiento preventivo', label: 'Mantenimiento Preventivo' },

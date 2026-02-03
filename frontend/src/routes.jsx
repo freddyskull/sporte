@@ -4,6 +4,7 @@ import { Inicio } from './pages/Inicio'
 import { Tecnicos } from './pages/Tecnicos'
 import { Departamentos } from './pages/Departamentos'
 import { Historial } from './pages/Historial'
+import { EstadisticasTecnicosPage } from './pages/EstadisticasTecnicosPage'
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/historial",
     element: <Historial />,
+  },
+  {
+    path: "/estadisticas-tecnicos",
+    element: <EstadisticasTecnicosPage />,
   },
 ])
 

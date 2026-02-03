@@ -34,14 +34,30 @@ const EstadisticasAsuntos = () => {
   }
 
   const processData = (filteredHistorial) => {
-    const asuntoCount = {}
+    const asuntoStats = {}
     let maxVal = 0
 
     filteredHistorial.forEach(h => {
       const asunto = h.asunto
       if (asunto) {
-        asuntoCount[asunto] = (asuntoCount[asunto] || 0) + 1
-        if (asuntoCount[asunto] > maxVal) maxVal = asuntoCount[asunto]
+        if (!asuntoStats[asunto]) {
+          asuntoStats[asunto] = {
+            count: 0,
+            tecnicos: {}
+          }
+        }
+
+        asuntoStats[asunto].count += 1
+
+        const tecnicos = h.expand?.tecnicos_asociados || []
+        tecnicos.forEach(t => {
+          const tName = t.nombre
+          if (tName) {
+            asuntoStats[asunto].tecnicos[tName] = (asuntoStats[asunto].tecnicos[tName] || 0) + 1
+          }
+        })
+
+        if (asuntoStats[asunto].count > maxVal) maxVal = asuntoStats[asunto].count
       }
     })
 
@@ -49,15 +65,52 @@ const EstadisticasAsuntos = () => {
     // We set fullMark to be slightly higher than max value for better visual
     const fullMark = Math.ceil(maxVal * 1.2) || 10
 
-    return Object.entries(asuntoCount).map(([subject, count]) => ({
-      subject: capitalize(subject),
-      count,
-      fullMark
-    }))
+    return Object.entries(asuntoStats).map(([subject, stats]) => {
+      let topTecnico = null
+      let topTecnicoCount = 0
+
+      Object.entries(stats.tecnicos).forEach(([tName, tCount]) => {
+        if (tCount > topTecnicoCount) {
+          topTecnicoCount = tCount
+          topTecnico = tName
+        }
+      })
+
+      return {
+        subject: capitalize(subject),
+        count: stats.count,
+        fullMark,
+        topTecnico,
+        topTecnicoCount
+      }
+    })
   }
 
   const capitalize = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  }
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <div className="bg-slate-950/90 text-slate-50 p-3 rounded-lg shadow-xl text-xs border border-slate-800 backdrop-blur-sm">
+          <p className="font-bold mb-1 text-sm capitalize">{data.subject}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400">Soportes:</span>
+            <span className="font-bold">{data.count}</span>
+          </div>
+          {data.topTecnico && (
+            <div className="mt-2 pt-2 border-t border-slate-800">
+              <span className="text-xs text-slate-400 block mb-0.5">Top Técnico:</span>
+              <span className="font-medium text-emerald-400">{data.topTecnico}</span>
+              <span className="text-xs text-slate-500 ml-1">({data.topTecnicoCount})</span>
+            </div>
+          )}
+        </div>
+      )
+    }
+    return null
   }
 
   const renderRadarChart = (chartData) => {
@@ -82,9 +135,7 @@ const EstadisticasAsuntos = () => {
             fill="#8884d8"
             fillOpacity={0.6}
           />
-          <Tooltip
-            contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-          />
+          <Tooltip content={<CustomTooltip />} />
         </RadarChart>
       </ResponsiveContainer>
     )

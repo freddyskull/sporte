@@ -10,12 +10,13 @@ const columns = [
 ]
 
 const fields = [
-  { key: 'nombre', label: 'Nombre', type: 'text' },
+  { key: 'nombre', label: 'Nombre', type: 'text', required: true },
   { key: 'cedula', label: 'Cédula', type: 'text' },
   {
     key: 'cargo',
     label: 'Cargo',
     type: 'select',
+    required: true,
     options: [
       { value: 'programador', label: 'Programador' },
       { value: 'tecnico', label: 'Técnico' },

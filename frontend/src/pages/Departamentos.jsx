@@ -34,12 +34,12 @@ const columns = [
 ]
 
 const fields = [
-  { key: 'nombre', label: 'Nombre', type: 'text' },
+  { key: 'nombre', label: 'Nombre', type: 'text', required: true },
   { key: 'descripcion', label: 'Descripción', type: 'text', optional: true },
-  { key: 'maquinas', label: 'Máquinas', type: 'number' },
-  { key: 'switchs', label: 'Switchs', type: 'number' },
-  { key: 'ubicacions', label: 'Ubicaciones', type: 'text' },
-  { key: 'ubicacion_img', label: 'Imagen de Ubicación', type: 'file' },
+  { key: 'maquinas', label: 'Máquinas', type: 'number', optional: true },
+  { key: 'switchs', label: 'Switchs', type: 'number', optional: true },
+  { key: 'ubicacions', label: 'Ubicaciones', type: 'text', optional: true },
+  { key: 'ubicacion_img', label: 'Imagen de Ubicación', type: 'file', optional: true },
 ]
 
 export const Departamentos = () => {
