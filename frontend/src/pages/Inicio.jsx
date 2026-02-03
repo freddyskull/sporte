@@ -15,6 +15,7 @@ import useDepartamentosStore from '../stores/departamentosStore'
 import useHistorialStore from '../stores/historialStore'
 import EstadisticasTecnicos from '../components/EstadisticasTecnicos'
 import EstadisticasDepartamentos from '../components/EstadisticasDepartamentos'
+import EstadisticasSoportesMensuales from '../components/EstadisticasSoportesMensuales'
 
 export const Inicio = () => {
 
@@ -66,6 +67,7 @@ export const Inicio = () => {
       <div className='grid grid-cols-1 md:grid-cols-2 mt-6 gap-4'>
         <EstadisticasTecnicos />
         <EstadisticasDepartamentos />
+        <EstadisticasSoportesMensuales />
       </div>
     </Layout >
   )

@@ -16,7 +16,7 @@ const useHistorialStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const records = await pb.collection("historial").getFullList({
-        sort: "-created",
+        sort: "-fecha_soporte",
         expand: "departamento,tecnicos_asociados",
       });
 

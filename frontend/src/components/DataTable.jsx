@@ -32,15 +32,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, Edit, Trash2, Car } from 'lucide-react'
+import { Plus, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 
-const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
+import DataForm from './DataForm'
+
+const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraLeftContent }) => {
   const [globalFilter, setGlobalFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mode, setMode] = useState('create') // 'create' or 'edit'
   const [selectedItem, setSelectedItem] = useState(null)
-  const [formData, setFormData] = useState({})
+
+  // We don't need formData state here anymore as DataForm manages it or we pass initialData
+  // But wait, DataForm copies initialData to internal state. 
+  // We need to pass the correct initialData when opening the dialog.
+  const [initialFormData, setInitialFormData] = useState({})
 
   const table = useReactTable({
     data,
@@ -83,14 +90,22 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
   const handleCreate = () => {
     setMode('create')
     setSelectedItem(null)
-    setFormData(fields.reduce((acc, field) => ({ ...acc, [field.key]: '' }), {}))
+    setInitialFormData(fields.reduce((acc, field) => ({ ...acc, [field.key]: field.defaultValue || '' }), {}))
     setDialogOpen(true)
   }
 
   const handleEdit = (item) => {
     setMode('edit')
     setSelectedItem(item)
-    setFormData({ ...item })
+    // Ensure we format the date correctly for the date input if it exists
+    const formattedItem = { ...item }
+    fields.forEach(field => {
+      if (field.type === 'date' && item[field.key]) {
+        // Handle both ISO strings (T separator) and SQL-like strings (space separator)
+        formattedItem[field.key] = item[field.key].split(/[T ]/)[0]
+      }
+    })
+    setInitialFormData(formattedItem)
     setDialogOpen(true)
   }
 
@@ -100,8 +115,7 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
     }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleFormSubmit = (formData) => {
     if (mode === 'create') {
       onCreate(formData)
     } else {
@@ -110,20 +124,20 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
     setDialogOpen(false)
   }
 
-  const handleInputChange = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }))
-  }
 
   return (
     <Card>
       <CardContent>
         <div className="flex justify-between items-center mb-4">
-          <Input
-            placeholder="Buscar..."
-            value={globalFilter ?? ''}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
-            className="max-w-sm"
-          />
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              placeholder="Buscar..."
+              value={globalFilter ?? ''}
+              onChange={(event) => setGlobalFilter(String(event.target.value))}
+              className="max-w-sm"
+            />
+            {extraLeftContent}
+          </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="uppercase" onClick={handleCreate}>
@@ -139,96 +153,21 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
                   {mode === 'create' ? 'Ingresa los datos para crear un nuevo registro.' : 'Edita los datos del registro.'}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {fields.map((field) => (
-                  <div key={field.key}>
-                    <Label htmlFor={field.key} className="block mb-2 text-slate-600">{field.label}</Label>
-                    {field.type === 'select' ? (
-                      <Select
-                        value={formData[field.key] || ''}
-                        onValueChange={(value) => handleInputChange(field.key, value)}
-                      >
-                        <SelectTrigger className="w-full bg-slate-300">
-                          <SelectValue placeholder={`Selecciona ${field.label.toLowerCase()}`} />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-200 border-slate-400">
-                          {field.options?.map((option) => (
-                            <SelectItem key={option.value} value={option.value} className="uppercase font-bold text-slate-600">
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : field.type === 'file' ? (
-                      <Input
-                        id={field.key}
-                        type="file"
-                        onChange={(e) => handleInputChange(field.key, e.target.files[0])}
-                        accept="image/*"
-                      />
-                    ) : field.type === 'textarea' ? (
-                      <Textarea
-                        id={field.key}
-                        value={formData[field.key] || ''}
-                        onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        required={!field.optional}
-                      />
-                    ) : field.type === 'multi-select' ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal bg-slate-300 uppercase">
-                            {formData[field.key]?.length
-                              ? field.options
-                                ?.filter((opt) => formData[field.key].includes(opt.value))
-                                .map((opt) => opt.label)
-                                .join(', ')
-                              : 'Seleccionar técnicos'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                          <div className="space-y-2">
-                            {field.options?.map((option) => (
-                              <div key={option.value} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={option.value}
-                                  checked={formData[field.key]?.includes(option.value) || false}
-                                  onCheckedChange={(checked) => {
-                                    const current = formData[field.key] || []
-                                    const newSelected = checked
-                                      ? [...current, option.value]
-                                      : current.filter((v) => v !== option.value)
-                                    handleInputChange(field.key, newSelected)
-                                  }}
-                                />
-                                <Label className="uppercase font-bold text-slate-600" htmlFor={option.value}>{option.label}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <Input
-                        id={field.key}
-                        type={field.type || 'text'}
-                        value={formData[field.key] || ''}
-                        onChange={(e) => handleInputChange(field.key, e.target.value)}
-                        required={!field.optional}
-                      />
-                    )}
-                  </div>
-                ))}
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    {mode === 'create' ? 'Crear' : 'Actualizar'}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+
+              {/* Force re-render of DataForm when dialog opens or mode/data changes to reset state */}
+              {dialogOpen && (
+                <DataForm
+                  fields={fields}
+                  initialData={initialFormData}
+                  onSubmit={handleFormSubmit}
+                  onCancel={() => setDialogOpen(false)}
+                  submitLabel={mode === 'create' ? 'Crear' : 'Actualizar'}
+                />
+              )}
+
+            </DialogContent >
+          </Dialog >
+        </div >
 
         <div className="rounded-md border">
           <table className="w-full">
@@ -292,8 +231,8 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields }) => {
             Siguiente
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </CardContent >
+    </Card >
   )
 }
 

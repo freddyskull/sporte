@@ -34,7 +34,7 @@ const EstadisticasDepartamentos = () => {
 
   const filterByPeriod = (historial, now, days) => {
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-    return historial.filter(h => new Date(h.created) >= startDate)
+    return historial.filter(h => new Date(h.fecha_soporte) >= startDate)
   }
 
   const processData = (filteredHistorial) => {
@@ -50,28 +50,38 @@ const EstadisticasDepartamentos = () => {
     return Object.entries(departamentoCount).map(([name, value]) => ({ name, value }))
   }
 
-  const renderPieChart = (chartData) => (
-    <ResponsiveContainer width="100%" height={400}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-  )
+  const renderPieChart = (chartData) => {
+    if (!chartData || chartData.length === 0) {
+      return (
+        <div className="flex h-[400px] w-full items-center justify-center text-slate-400 font-medium uppercase">
+          No hay datos para mostrar
+        </div>
+      )
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    )
+  }
 
   return (
     <Card>
@@ -82,7 +92,7 @@ const EstadisticasDepartamentos = () => {
               <h2 className="text-sm font-bold uppercase text-slate-800 text-nowrap">Estadísticas departamentos</h2>
               <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
-                <TabsTrigger value="mensual">MENSUAl</TabsTrigger>
+                <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
                 <TabsTrigger value="anual">ANUAL</TabsTrigger>
               </TabsList>
             </div>
