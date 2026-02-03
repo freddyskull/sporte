@@ -36,7 +36,7 @@ export const Header = () => {
       <div className='container mx-auto flex-col gap-4 lg:flex-row flex justify-between items-center py-4 px-4'>
         <div>
           <Link to="/">
-            <img src="/logo.webp" className='w-52 md:w-42 dark:invert' alt="Logo" />
+            <img src="/logo.webp" className='w-52 md:w-42 dark:brightness-0 dark:invert' alt="Logo" />
           </Link>
         </div>
         <nav>
