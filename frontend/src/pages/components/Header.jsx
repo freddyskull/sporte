@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Links } from 'react-router-dom'
 import NuevoSoporteDialog from '@/components/NuevoSoporteDialog'
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -35,7 +35,9 @@ export const Header = () => {
     <div className="shadow-md bg-card text-foreground border-b border-border/40 transition-colors duration-300">
       <div className='container mx-auto flex-col gap-4 lg:flex-row flex justify-between items-center py-4 px-4'>
         <div>
-          <img src="/logo.webp" className='w-52 md:w-42 dark:invert' alt="Logo" />
+          <Link to="/">
+            <img src="/logo.webp" className='w-52 md:w-42 dark:invert' alt="Logo" />
+          </Link>
         </div>
         <nav>
           <ul className='flex gap-4 items-center'>

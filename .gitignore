@@ -13,11 +13,11 @@ dist-ssr
 *.local
 
 # PocketBase
-dbserve
-db
-frontend/node_modules
-frontend/dist
-frontend/src-tauri/target
+/dbserve
+/db
+/frontend/node_modules
+/frontend/dist
+/frontend/src-tauri/target
 
 # Editor directories and files
 .vscode/*

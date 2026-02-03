@@ -21,7 +21,7 @@ const COLORS = [
 const EstadisticasTecnicos = () => {
   const { historial, fetchHistorial } = useHistorialStore()
   const { tecnicos, fetchTecnicos } = useTecnicosStore()
-  const [data, setData] = useState({ semanal: [], mensual: [], anual: [] })
+  const [data, setData] = useState({ semanal: [], mensual: [], anual: [], general: [] })
 
   useEffect(() => {
     fetchHistorial()
@@ -39,6 +39,7 @@ const EstadisticasTecnicos = () => {
         semanal: processData(semanal),
         mensual: processData(mensual),
         anual: processData(anual),
+        general: processData(historial),
       })
     }
   }, [historial, tecnicos])
@@ -101,10 +102,11 @@ const EstadisticasTecnicos = () => {
           <Tabs defaultValue="semanal" className="">
             <div className='flex lg:justify-between  flex-col lg:flex-row  gap-4 items-center'>
               <h2 className="text-sm font-bold text-nowrap uppercase text-foreground">Estadísticas de Técnicos</h2>
-              <TabsList className="grid grid-cols-3">
+              <TabsList className="grid grid-cols-4">
                 <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
                 <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
                 <TabsTrigger value="anual">ANUAL</TabsTrigger>
+                <TabsTrigger value="general">GENERAL</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="semanal">
@@ -115,6 +117,9 @@ const EstadisticasTecnicos = () => {
             </TabsContent>
             <TabsContent value="anual">
               {renderPieChart(data.anual)}
+            </TabsContent>
+            <TabsContent value="general">
+              {renderPieChart(data.general)}
             </TabsContent>
           </Tabs>
         </div>

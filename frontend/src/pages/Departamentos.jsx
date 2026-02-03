@@ -55,7 +55,10 @@ export const Departamentos = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4">Departamentos</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold uppercase">Departamentos</h1>
+        <span className="text-sm text-muted-foreground">Total de departamentos: {departamentos.length}</span>
+      </div>
       <DataTable
         data={departamentos}
         columns={columns}

@@ -129,6 +129,21 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+.bg-amarillo{
+  background-color: #fbbf24;
+  color: #000000;
+}
+
+.bg-verde{
+  background-color: #10b981;
+  color: #000000;
+}
+
+.bg-azul{
+  background-color: #3b82f6;
+  color: #ffff;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

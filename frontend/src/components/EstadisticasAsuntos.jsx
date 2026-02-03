@@ -1,46 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import useHistorialStore from '../stores/historialStore'
-import useDepartamentosStore from '../stores/departamentosStore'
 import { Card, CardContent } from '@/components/ui/card'
 
-const COLORS = [
-  '#FF6384',
-  '#36A2EB',
-  '#FFCE56',
-  '#4BC0C0',
-  '#9966FF',
-  '#FF6384',
-  '#36A2EB',
-  '#FFCE56',
-  '#4BC0C0',
-  '#9966FF',
-  '#FF6384',
-  '#36A2EB',
-  '#FFCE56',
-  '#4BC0C0',
-  '#9966FF',
-  '#FF6384',
-  '#36A2EB',
-  '#FFCE56',
-  '#4BC0C0',
-  '#9966FF',
-  '#FF6384',
-]
-
-const EstadisticasDepartamentos = () => {
+const EstadisticasAsuntos = () => {
   const { historial, fetchHistorial } = useHistorialStore()
-  const { departamentos, fetchDepartamentos } = useDepartamentosStore()
   const [data, setData] = useState({ semanal: [], mensual: [], anual: [], general: [] })
 
   useEffect(() => {
     fetchHistorial()
-    fetchDepartamentos()
-  }, [fetchHistorial, fetchDepartamentos])
+  }, [fetchHistorial])
 
   useEffect(() => {
-    if (historial.length && departamentos.length) {
+    if (historial.length) {
       const now = new Date()
       const semanal = filterByPeriod(historial, now, 7)
       const mensual = filterByPeriod(historial, now, 30)
@@ -53,7 +26,7 @@ const EstadisticasDepartamentos = () => {
         general: processData(historial),
       })
     }
-  }, [historial, departamentos])
+  }, [historial])
 
   const filterByPeriod = (historial, now, days) => {
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
@@ -61,19 +34,33 @@ const EstadisticasDepartamentos = () => {
   }
 
   const processData = (filteredHistorial) => {
-    const departamentoCount = {}
+    const asuntoCount = {}
+    let maxVal = 0
 
     filteredHistorial.forEach(h => {
-      const departamento = h.expand?.departamento?.nombre
-      if (departamento) {
-        departamentoCount[departamento] = (departamentoCount[departamento] || 0) + 1
+      const asunto = h.asunto
+      if (asunto) {
+        asuntoCount[asunto] = (asuntoCount[asunto] || 0) + 1
+        if (asuntoCount[asunto] > maxVal) maxVal = asuntoCount[asunto]
       }
     })
 
-    return Object.entries(departamentoCount).map(([name, value]) => ({ name, value }))
+    // Format for Recharts Radar
+    // We set fullMark to be slightly higher than max value for better visual
+    const fullMark = Math.ceil(maxVal * 1.2) || 10
+
+    return Object.entries(asuntoCount).map(([subject, count]) => ({
+      subject: capitalize(subject),
+      count,
+      fullMark
+    }))
   }
 
-  const renderPieChart = (chartData) => {
+  const capitalize = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  }
+
+  const renderRadarChart = (chartData) => {
     if (!chartData || chartData.length === 0) {
       return (
         <div className="flex h-[400px] w-full items-center justify-center text-slate-400 font-medium uppercase">
@@ -84,24 +71,21 @@ const EstadisticasDepartamentos = () => {
 
     return (
       <ResponsiveContainer width="100%" height={400}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            outerRadius={80}
+        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+          <PolarGrid />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--foreground)', fontSize: 10 }} />
+          <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
+          <Radar
+            name="Soportes"
+            dataKey="count"
+            stroke="#8884d8"
             fill="#8884d8"
-            dataKey="value"
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+            fillOpacity={0.6}
+          />
+          <Tooltip
+            contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+          />
+        </RadarChart>
       </ResponsiveContainer>
     )
   }
@@ -111,8 +95,8 @@ const EstadisticasDepartamentos = () => {
       <CardContent>
         <div className="w-full mx-auto">
           <Tabs defaultValue="semanal" className="w-full">
-            <div className='flex lg:justify-between  flex-col lg:flex-row gap-4 items-center'>
-              <h2 className="text-sm font-bold uppercase text-foreground text-nowrap">Estadísticas departamentos</h2>
+            <div className='flex lg:justify-between flex-col lg:flex-row gap-4 items-center'>
+              <h2 className="text-sm font-bold uppercase text-foreground text-nowrap">Estadísticas por Asunto</h2>
               <TabsList className="grid grid-cols-4">
                 <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
                 <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
@@ -121,16 +105,16 @@ const EstadisticasDepartamentos = () => {
               </TabsList>
             </div>
             <TabsContent value="semanal">
-              {renderPieChart(data.semanal)}
+              {renderRadarChart(data.semanal)}
             </TabsContent>
             <TabsContent value="mensual">
-              {renderPieChart(data.mensual)}
+              {renderRadarChart(data.mensual)}
             </TabsContent>
             <TabsContent value="anual">
-              {renderPieChart(data.anual)}
+              {renderRadarChart(data.anual)}
             </TabsContent>
             <TabsContent value="general">
-              {renderPieChart(data.general)}
+              {renderRadarChart(data.general)}
             </TabsContent>
           </Tabs>
         </div>
@@ -139,4 +123,4 @@ const EstadisticasDepartamentos = () => {
   )
 }
 
-export default EstadisticasDepartamentos
+export default EstadisticasAsuntos

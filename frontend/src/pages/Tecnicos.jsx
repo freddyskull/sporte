@@ -36,7 +36,10 @@ export const Tecnicos = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-4 uppercase text-foreground">Lista de técnicos</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold uppercase">Lista de técnicos</h1>
+        <span className="text-sm text-muted-foreground">Total de técnicos: {tecnicos.length}</span>
+      </div>
       <DataTable
         data={tecnicos}
         columns={columns}

@@ -268,6 +268,11 @@ export const Historial = () => {
       }
 
       return true
+    }).sort((a, b) => {
+      // Sort by fecha_soporte descending (newest first)
+      const dateA = new Date(a.fecha_soporte)
+      const dateB = new Date(b.fecha_soporte)
+      return dateB - dateA
     })
   }, [historial, startDate, endDate, selectedYear, startMonth, endMonth])
 
@@ -295,7 +300,7 @@ export const Historial = () => {
           options={asuntoOptions}
           onSave={updateHistorial}
         >
-          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap overflow-hidden h-[20px] line-clamp-1" title={getValue()}>
+          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap h-[20px]" title={getValue()}>
             {getValue()}
           </div>
         </EditableCell>
@@ -315,9 +320,9 @@ export const Historial = () => {
           <div
             className={
               `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border uppercase text-nowrap
-                    ${getValue() === 'pendiente' && 'bg-yellow-100 text-yellow-800 border-yellow-200'}
-                    ${getValue() === 'en progreso' && 'bg-green-100 text-green-800 border-green-200'}
-                    ${getValue() === 'resuelto' && 'bg-blue-100 text-blue-800 border-blue-200'}
+                    ${getValue() === 'pendiente' && 'bg-amarillo text-yellow-800'}
+                    ${getValue() === 'en progreso' && 'bg-verde text-green-800'}
+                    ${getValue() === 'resuelto' && 'bg-azul text-blue-800'}
                     `
             }
             title={getValue()}>
@@ -446,25 +451,6 @@ export const Historial = () => {
         )
       },
     },
-    // {
-    //   accessorKey: 'created',
-    //   header: 'creación',
-    //   cell: ({ getValue }) => {
-    //     // Read-only
-    //     if (!getValue()) return 'N/A'
-    //     const date = new Date(getValue()).toLocaleDateString('es-ES', {
-    //       day: '2-digit',
-    //       month: 'short',
-    //       year: '2-digit',
-    //     })
-
-    //     return (
-    //       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap">
-    //         {date}
-    //       </span>
-    //     )
-    //   },
-    // },
   ], [asuntoOptions, statusOptions, departamentoOptions, tecnicoOptions, updateHistorial])
 
   const today = new Date()
@@ -494,6 +480,7 @@ export const Historial = () => {
       <div className="flex flex-col gap-4 mb-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Historial</h1>
+          <span className="text-sm text-muted-foreground">Total de soportes: {historial.length}</span>
         </div>
 
         {showFilters && (

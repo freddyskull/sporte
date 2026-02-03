@@ -160,7 +160,7 @@ const EstadisticasSoportesMensuales = () => {
   const dynamicHeight = Math.max(300, data.length * 60)
 
   return (
-    <Card className="col-span-1 md:col-span-2 w-full">
+    <Card className="w-full h-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col space-y-1.5">
           <CardTitle className="uppercase text-foreground text-md uppercase font-bold">Soportes Mensuales</CardTitle>
@@ -201,7 +201,7 @@ const EstadisticasSoportesMensuales = () => {
                   width={65}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500, textTransform: 'capitalize' }}
+                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)', fontWeight: 500, textTransform: 'capitalize' }}
                 />
                 <Tooltip
                   content={<CustomTooltip />}
@@ -221,7 +221,7 @@ const EstadisticasSoportesMensuales = () => {
                   <LabelList
                     dataKey="soportes"
                     position="right"
-                    fill="#0f172a"
+                    fill="var(--foreground)"
                     offset={10}
                     fontSize={14}
                     fontWeight="bold"
