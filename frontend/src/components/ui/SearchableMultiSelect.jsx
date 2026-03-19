@@ -46,7 +46,7 @@ export const SearchableMultiSelect = ({ value, options, onSelect, placeholder })
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between bg-slate-300 text-slate-900 font-normal min-h-[40px] h-auto whitespace-normal"
+          className="w-full justify-between bg-background text-foreground font-normal min-h-[40px] h-auto whitespace-normal"
         >
           <div className="flex flex-wrap gap-1 items-center">
             {selectedValues.length > 0 ? (
@@ -58,19 +58,19 @@ export const SearchableMultiSelect = ({ value, options, onSelect, placeholder })
                   <Badge
                     key={val}
                     variant="secondary"
-                    className="mr-1 bg-slate-100 text-slate-900 hover:bg-slate-200 uppercase flex items-center gap-1 border border-slate-300"
+                    className="mr-1 bg-secondary text-secondary-foreground hover:bg-secondary/80 uppercase flex items-center gap-1 border border-border"
                   >
                     {option.label}
                     <div
                       role="button"
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer p-0.5 hover:bg-slate-300 transition-colors"
+                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer p-0.5 hover:bg-muted transition-colors"
                       onMouseDown={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
                       }}
                       onClick={(e) => handleRemove(e, val)}
                     >
-                      <X className="h-3 w-3 text-red-500 font-bold" />
+                      <X className="h-3 w-3 text-destructive font-bold" />
                     </div>
                   </Badge>
                 )

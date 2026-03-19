@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "pocketbase-best-practices": {
+      "source": "greendesertsnow/pocketbase-skills",
+      "sourceType": "github",
+      "computedHash": "4df4b383b3df7a1e18f964b6330d43743a7305d94f6f00c0ad51742ccec83666"
+    },
+    "react": {
+      "source": "vercel-labs/json-render",
+      "sourceType": "github",
+      "computedHash": "22dde85d5a69aaee45eb56aeed8e7f8fb5d2ae2559b38f71621d0654385bed1d"
+    },
+    "tauri": {
+      "source": "martinholovsky/claude-skills-generator",
+      "sourceType": "github",
+      "computedHash": "8846df779beba33d583a1712ecfb18a3dc0a542ad1c95643a2797e0eb44f43ab"
+    }
+  }
+}

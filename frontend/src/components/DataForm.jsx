@@ -210,7 +210,7 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, onChange, subm
                     <div className="flex items-center space-x-2 h-9">
                       <Switch
                         id={field.key}
-                        checked={getFieldValue(field.key) || false}
+                        checked={!!getFieldValue(field.key)}
                         onCheckedChange={(checked) => handleInputChange(field.key, checked)}
                         disabled={isSubmitting}
                       />
@@ -251,6 +251,7 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, onChange, subm
                 const defaultValue = field.defaultValue !== undefined
                   ? field.defaultValue
                   : (field.type === 'searchable-multi-select' || field.type === 'multi-select' ? [] : '')
+                
                 if (field.key.startsWith('campo_auxiliar.')) {
                   const auxKey = field.key.split('.')[1]
                   if (!resetData.campo_auxiliar) resetData.campo_auxiliar = {}

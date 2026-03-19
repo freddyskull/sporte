@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, Links } from 'react-router-dom'
-import NuevoSoporteDialog from '@/components/NuevoSoporteDialog'
+import SoporteDialog from '@/components/SoporteDialog'
 import { ModeToggle } from '@/components/mode-toggle'
 
 export const Header = () => {
@@ -19,17 +19,13 @@ export const Header = () => {
       href: '/departamentos',
     },
     {
-      name: 'Historial',
-      href: '/historial',
-    },
-    {
       name: 'Estadísticas Técnicos',
       href: '/estadisticas-tecnicos',
     },
-    // {
-    //   name: 'Mapa 3D',
-    //   href: '/mapa',
-    // },
+    {
+      name: 'Historial',
+      href: '/historial',
+    },
     {
       name: 'Nuevo soporte',
       href: '#',
@@ -56,11 +52,11 @@ export const Header = () => {
               if (item.name === 'Nuevo soporte') {
                 return (
                   <li key={item.name}>
-                    <NuevoSoporteDialog>
+                    <SoporteDialog>
                       <button className={`font-bold uppercase text-sm ${item.className}`}>
                         {item.name}
                       </button>
-                    </NuevoSoporteDialog>
+                    </SoporteDialog>
                   </li>
                 )
               }

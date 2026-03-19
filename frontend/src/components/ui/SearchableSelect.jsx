@@ -26,7 +26,7 @@ export const SearchableSelect = ({ value, options, onSelect, placeholder }) => {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between bg-slate-300 text-slate-900 font-normal uppercase"
+          className="w-full justify-between bg-background text-foreground font-normal uppercase"
         >
           {value
             ? options.find((option) => option.value === value)?.label

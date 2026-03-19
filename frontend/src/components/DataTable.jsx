@@ -49,7 +49,21 @@ import DataForm from './DataForm'
 import useDraftStore from '../stores/draftStore'
 import { cn } from "@/lib/utils"
 
-const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraLeftContent, extraActions, draftKey }) => {
+const DataTable = ({ 
+  data, 
+  columns, 
+  onCreate, 
+  onUpdate, 
+  onDelete, 
+  fields, 
+  extraLeftContent, 
+  extraActions, 
+  draftKey, 
+  renderDialog, 
+  showSearch = true,
+  pagination,
+  onPaginationChange
+}) => {
   const [globalFilter, setGlobalFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mode, setMode] = useState('create') // 'create' or 'edit'
@@ -134,13 +148,20 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
     state: {
       globalFilter,
       sorting,
+      pagination,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: onPaginationChange,
   })
 
   const handleCreate = () => {
     setMode('create')
     setSelectedItem(null)
+
+    if (renderDialog) {
+      setDialogOpen(true)
+      return
+    }
 
     // Check for draft
     if (draftKey) {
@@ -154,7 +175,7 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
 
     const defaults = {}
     fields.forEach(field => {
-      const defaultValue = field.defaultValue || ''
+      const defaultValue = field.defaultValue !== undefined ? field.defaultValue : ''
       if (field.key.startsWith('campo_auxiliar.')) {
         const auxKey = field.key.split('.')[1]
         if (!defaults.campo_auxiliar) defaults.campo_auxiliar = {}
@@ -170,6 +191,12 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
   const handleEdit = (item) => {
     setMode('edit')
     setSelectedItem(item)
+
+    if (renderDialog) {
+      setDialogOpen(true)
+      return
+    }
+
     // Ensure we format the date correctly for the date input if it exists
     const formattedItem = { ...item }
     fields.forEach(field => {
@@ -178,6 +205,18 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
         formattedItem[field.key] = item[field.key].split(/[T ]/)[0]
       }
     })
+
+    // Auto-activate "mostrar_detalles" if there is technical data in campo_auxiliar
+    if (fields.some(f => f.key === 'mostrar_detalles')) {
+      const aux = typeof item.campo_auxiliar === 'string'
+        ? JSON.parse(item.campo_auxiliar || '{}')
+        : (item.campo_auxiliar || {})
+
+      if (aux.especificaciones || aux.nombre_equipo || aux.serial_bienes || aux.direccion_mac) {
+        formattedItem.mostrar_detalles = true
+      }
+    }
+
     setInitialFormData(formattedItem)
     setDialogOpen(true)
   }
@@ -241,57 +280,72 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
       <CardContent>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
           <div className="flex flex-col md:flex-row items-center gap-2 w-full md:flex-1">
-            <Input
-              placeholder="Buscar..."
-              value={globalFilter ?? ''}
-              onChange={(event) => setGlobalFilter(String(event.target.value))}
-              className="w-full md:max-w-sm"
-            />
+            {showSearch && (
+              <Input
+                placeholder="Buscar..."
+                value={globalFilter ?? ''}
+                onChange={(event) => setGlobalFilter(String(event.target.value))}
+                className="w-full md:max-w-sm"
+              />
+            )}
             {extraLeftContent}
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  className={cn("w-full md:w-auto uppercase transition-all duration-300", hasDraft ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
-                  onClick={handleCreate}
-                >
-                  {hasDraft ? (
-                    <>
-                      <span className="mr-2">Continuar</span>
-                      <Edit className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                  <DialogTitle className="text-lg font-medium text-foreground">
-                    {mode === 'create'
-                      ? (hasDraft ? 'Continuar Editando Borrador' : 'Crear Nuevo')
-                      : 'Editar'}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {mode === 'create'
-                      ? (hasDraft ? 'Tienes datos sin guardar. Continúa donde lo dejaste.' : 'Ingresa los datos para crear un nuevo registro.')
-                      : 'Edita los datos del registro.'}
-                  </DialogDescription>
-                </DialogHeader>
+            {renderDialog ? (
+              renderDialog({
+                open: dialogOpen,
+                setOpen: setDialogOpen,
+                mode,
+                item: selectedItem,
+                onSuccess: () => {
+                  setDialogOpen(false)
+                  // No llamamos a handleFormSubmit aquí porque SoporteDialog ya maneja la lógica de guardado
+                }
+              })
+            ) : (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className={cn("w-full md:w-auto uppercase transition-all duration-300", hasDraft ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
+                    onClick={handleCreate}
+                  >
+                    {hasDraft ? (
+                      <>
+                        <span className="mr-2">Continuar</span>
+                        <Edit className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg font-medium text-foreground">
+                      {mode === 'create'
+                        ? (hasDraft ? 'Continuar Editando Borrador' : 'Crear Nuevo')
+                        : 'Editar'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {mode === 'create'
+                        ? (hasDraft ? 'Tienes datos sin guardar. Continúa donde lo dejaste.' : 'Ingresa los datos para crear un nuevo registro.')
+                        : 'Edita los datos del registro.'}
+                    </DialogDescription>
+                  </DialogHeader>
 
-                {dialogOpen && (
-                  <DataForm
-                    fields={fields}
-                    initialData={initialFormData}
-                    onSubmit={handleFormSubmit}
-                    onChange={handleFormChange}
-                    onCancel={() => setDialogOpen(false)}
-                    submitLabel={mode === 'create' ? 'Crear' : 'Actualizar'}
-                  />
-                )}
-              </DialogContent >
-            </Dialog >
+                  {dialogOpen && (
+                    <DataForm
+                      fields={fields}
+                      initialData={initialFormData}
+                      onSubmit={handleFormSubmit}
+                      onChange={handleFormChange}
+                      onCancel={() => setDialogOpen(false)}
+                      submitLabel={mode === 'create' ? 'Crear' : 'Actualizar'}
+                    />
+                  )}
+                </DialogContent >
+              </Dialog >
+            )}
           </div>
         </div >
 

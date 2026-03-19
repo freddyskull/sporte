@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Selector de modo oscuro compatible con navegadores antiguos */
+@variant dark (.dark &);
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -47,6 +48,9 @@
   --sidebar-accent-foreground: #262626;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #a3a3a3;
+  
+  /* Fallbacks para motores de renderizado muy antiguos */
+  border-color: #e5e5e5;
 }
 
 .dark {
@@ -83,9 +87,7 @@
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #27272a;
   --sidebar-ring: #d4d4d8;
-}
-
-@media (prefers-color-scheme: light) {
+  border-color: #27272a;
 }
 
 @theme inline {
@@ -146,9 +148,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
   }
 }
