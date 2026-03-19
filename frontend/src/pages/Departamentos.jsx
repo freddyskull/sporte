@@ -4,35 +4,6 @@ import useDepartamentosStore, { pb } from '../stores/departamentosStore'
 import DataTable from '../components/DataTable'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 
-const columns = [
-  { accessorKey: 'nombre', header: 'Nombre' },
-  { accessorKey: 'descripcion', header: 'Descripción' },
-  { accessorKey: 'maquinas', header: 'Máquinas' },
-  { accessorKey: 'switchs', header: 'Switchs' },
-  { accessorKey: 'ubicacions', header: 'Ubicaciones' },
-  {
-    id: 'ubicacion_img',
-    header: 'Imagen',
-    cell: ({ row }) => {
-      const filename = Array.isArray(row.original.ubicacion_img) ? row.original.ubicacion_img[0] : row.original.ubicacion_img
-      const imgUrl = filename ? pb.files.getUrl(row.original, filename) : null
-      return imgUrl ? (
-        <img
-          src={imgUrl}
-          alt="Ubicación"
-          className="w-16 h-16 object-cover cursor-pointer rounded"
-          onClick={() => {
-            console.log('Clicked, imgUrl:', imgUrl)
-            setFullImage(imgUrl)
-          }}
-        />
-      ) : (
-        <span>No imagen</span>
-      )
-    },
-  },
-]
-
 const fields = [
   { key: 'nombre', label: 'Nombre', type: 'text', required: true },
   { key: 'descripcion', label: 'Descripción', type: 'text', optional: true },
@@ -49,6 +20,34 @@ export const Departamentos = () => {
   useEffect(() => {
     fetchDepartamentos()
   }, [])
+
+  const columns = React.useMemo(() => [
+    { accessorKey: 'nombre', header: 'Nombre' },
+    { accessorKey: 'descripcion', header: 'Descripción' },
+    { accessorKey: 'maquinas', header: 'Máquinas' },
+    { accessorKey: 'switchs', header: 'Switchs' },
+    { accessorKey: 'ubicacions', header: 'Ubicaciones' },
+    {
+      id: 'ubicacion_img',
+      header: 'Imagen',
+      cell: ({ row }) => {
+        const filename = Array.isArray(row.original.ubicacion_img) ? row.original.ubicacion_img[0] : row.original.ubicacion_img
+        const imgUrl = filename ? pb.files.getUrl(row.original, filename) : null
+        return imgUrl ? (
+          <img
+            src={imgUrl}
+            alt="Ubicación"
+            className="w-16 h-16 object-cover cursor-pointer rounded"
+            onClick={() => {
+              setFullImage(imgUrl)
+            }}
+          />
+        ) : (
+          <span>No imagen</span>
+        )
+      },
+    },
+  ], [])
 
   if (loading) return <Layout><p>Cargando...</p></Layout>
   if (error) return <Layout><p>Error: {error}</p></Layout>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,6 +7,7 @@ import {
   getSortedRowModel,
   flexRender,
 } from '@tanstack/react-table'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -62,29 +63,34 @@ const DataTable = ({
   renderDialog, 
   showSearch = true,
   pagination,
-  onPaginationChange
+  onPaginationChange,
+  containerHeight = "60vh"
 }) => {
   const [globalFilter, setGlobalFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mode, setMode] = useState('create') // 'create' or 'edit'
   const [selectedItem, setSelectedItem] = useState(null)
-
-  // We don't need formData state here anymore as DataForm manages it or we pass initialData
-  // But wait, DataForm copies initialData to internal state. 
-  // We need to pass the correct initialData when opening the dialog.
   const [initialFormData, setInitialFormData] = useState({})
-
   const { getDraft, setDraft, clearDraft } = useDraftStore()
   const [hasDraft, setHasDraft] = useState(false)
+  const [sorting, setSorting] = useState([])
 
-  // Synchronize draft presence
+  // Paginación interna si no se provee por props
+  const [internalPagination, setInternalPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+
+  const actualPagination = pagination || internalPagination
+  const actualOnPaginationChange = onPaginationChange || setInternalPagination
+
+  const parentRef = useRef(null)
+
   useEffect(() => {
     if (!draftKey) return
     const draft = getDraft(draftKey)
     setHasDraft(!!draft && Object.keys(draft).length > 0)
-  }, [draftKey, getDraft, dialogOpen]) // Re-check when dialog closes/opens
-
-  const [sorting, setSorting] = useState([])
+  }, [draftKey, getDraft, dialogOpen])
 
   const table = useReactTable({
     data,
@@ -105,14 +111,11 @@ const DataTable = ({
               </PopoverTrigger>
               <PopoverContent className="w-48 p-1 shadow-xl border-primary/10" align="end">
                 <div className="flex flex-col gap-1">
-                  {/* Acciones extra inyectadas desde fuera (Generar Informe) */}
                   {extraActions && (
                     <div className="border-b border-primary/5 pb-1 mb-1">
                       {extraActions(row.original, true)}
                     </div>
                   )}
-
-                  {/* Acciones base del sistema */}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -122,7 +125,6 @@ const DataTable = ({
                     <Edit className="h-3.5 w-3.5 text-blue-500" />
                     Editar Registro
                   </Button>
-
                   <Button
                     variant="ghost"
                     size="sm"
@@ -148,22 +150,33 @@ const DataTable = ({
     state: {
       globalFilter,
       sorting,
-      pagination,
+      pagination: actualPagination,
     },
     onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: onPaginationChange,
+    onPaginationChange: actualOnPaginationChange,
   })
+
+  const { rows } = table.getRowModel()
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48, // Estimación de altura de fila
+    overscan: 10,
+  })
+
+  const virtualRows = virtualizer.getVirtualItems()
+  const totalSize = virtualizer.getTotalSize()
+  const paddingTop = virtualRows.length > 0 ? virtualRows?.[0]?.start || 0 : 0
+  const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows?.[virtualRows.length - 1]?.end || 0) : 0
 
   const handleCreate = () => {
     setMode('create')
     setSelectedItem(null)
-
     if (renderDialog) {
       setDialogOpen(true)
       return
     }
-
-    // Check for draft
     if (draftKey) {
       const draft = getDraft(draftKey)
       if (draft) {
@@ -172,7 +185,6 @@ const DataTable = ({
         return
       }
     }
-
     const defaults = {}
     fields.forEach(field => {
       const defaultValue = field.defaultValue !== undefined ? field.defaultValue : ''
@@ -191,32 +203,24 @@ const DataTable = ({
   const handleEdit = (item) => {
     setMode('edit')
     setSelectedItem(item)
-
     if (renderDialog) {
       setDialogOpen(true)
       return
     }
-
-    // Ensure we format the date correctly for the date input if it exists
     const formattedItem = { ...item }
     fields.forEach(field => {
       if (field.type === 'date' && item[field.key]) {
-        // Handle both ISO strings (T separator) and SQL-like strings (space separator)
         formattedItem[field.key] = item[field.key].split(/[T ]/)[0]
       }
     })
-
-    // Auto-activate "mostrar_detalles" if there is technical data in campo_auxiliar
     if (fields.some(f => f.key === 'mostrar_detalles')) {
       const aux = typeof item.campo_auxiliar === 'string'
         ? JSON.parse(item.campo_auxiliar || '{}')
         : (item.campo_auxiliar || {})
-
       if (aux.especificaciones || aux.nombre_equipo || aux.serial_bienes || aux.direccion_mac) {
         formattedItem.mostrar_detalles = true
       }
     }
-
     setInitialFormData(formattedItem)
     setDialogOpen(true)
   }
@@ -251,33 +255,23 @@ const DataTable = ({
     const totalPages = table.getPageCount()
     const currentPage = table.getState().pagination.pageIndex
     const pageNumbers = []
-
     if (totalPages <= 7) {
-      for (let i = 0; i < totalPages; i++) {
-        pageNumbers.push(i)
-      }
+      for (let i = 0; i < totalPages; i++) pageNumbers.push(i)
     } else {
       pageNumbers.push(0)
-      if (currentPage > 2) {
-        pageNumbers.push('ellipsis-start')
-      }
+      if (currentPage > 2) pageNumbers.push('ellipsis-start')
       const start = Math.max(1, currentPage - 1)
       const end = Math.min(totalPages - 2, currentPage + 1)
-      for (let i = start; i <= end; i++) {
-        pageNumbers.push(i)
-      }
-      if (currentPage < totalPages - 3) {
-        pageNumbers.push('ellipsis-end')
-      }
+      for (let i = start; i <= end; i++) pageNumbers.push(i)
+      if (currentPage < totalPages - 3) pageNumbers.push('ellipsis-end')
       pageNumbers.push(totalPages - 1)
     }
     return pageNumbers
   }
 
-
   return (
-    <Card>
-      <CardContent>
+    <Card className="flex flex-col overflow-hidden">
+      <CardContent className="flex-1 flex flex-col p-6 min-h-0">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
           <div className="flex flex-col md:flex-row items-center gap-2 w-full md:flex-1">
             {showSearch && (
@@ -297,10 +291,7 @@ const DataTable = ({
                 setOpen: setDialogOpen,
                 mode,
                 item: selectedItem,
-                onSuccess: () => {
-                  setDialogOpen(false)
-                  // No llamamos a handleFormSubmit aquí porque SoporteDialog ya maneja la lógica de guardado
-                }
+                onSuccess: () => setDialogOpen(false)
               })
             ) : (
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -308,6 +299,7 @@ const DataTable = ({
                   <Button
                     className={cn("w-full md:w-auto uppercase transition-all duration-300", hasDraft ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
                     onClick={handleCreate}
+                    aria-label={hasDraft ? "Continuar borrador" : "Crear nuevo registro"}
                   >
                     {hasDraft ? (
                       <>
@@ -332,7 +324,6 @@ const DataTable = ({
                         : 'Edita los datos del registro.'}
                     </DialogDescription>
                   </DialogHeader>
-
                   {dialogOpen && (
                     <DataForm
                       fields={fields}
@@ -349,15 +340,20 @@ const DataTable = ({
           </div>
         </div >
 
-        <div className="rounded-md border overflow-x-auto">
-          <table className="w-full min-w-[600px] md:min-w-full">
-            <thead>
+        <div 
+          ref={parentRef}
+          className="rounded-md border overflow-auto relative bg-background" 
+          style={{ height: containerHeight, maxHeight: 'calc(100vh - 300px)' }}
+        >
+          <table className="w-full min-w-[600px] md:min-w-full border-collapse">
+            <thead className="sticky top-0 z-20">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <tr key={headerGroup.id} className="bg-muted/95 backdrop-blur-md">
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className={`px-4 uppercase font-bold text-[11px] md:text-xs text-muted-foreground py-2 ${header.id === 'actions' ? 'text-right' : 'text-left'
+                      style={{ top: 0 }}
+                      className={`px-4 uppercase font-bold text-[11px] md:text-xs text-muted-foreground py-3 border-b sticky z-20 ${header.id === 'actions' ? 'text-right' : 'text-left'
                         }`}
                     >
                       {header.isPlaceholder ? null : (
@@ -382,19 +378,32 @@ const DataTable = ({
                 </tr>
               ))}
             </thead>
-            <tbody className="divide-y">
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-muted/30 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-2 text-xs md:text-sm">
-                        <div className="line-clamp-2">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))
+            <tbody>
+              {paddingTop > 0 && (
+                <tr>
+                  <td style={{ height: `${paddingTop}px` }} />
+                </tr>
+              )}
+              {virtualRows.length > 0 ? (
+                virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index]
+                  return (
+                    <tr 
+                      key={row.id} 
+                      className="hover:bg-muted/30 transition-colors"
+                      data-index={virtualRow.index}
+                      ref={node => virtualizer.measureElement(node)}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-2 text-xs md:text-sm border-b">
+                          <div className="line-clamp-2">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })
               ) : (
                 <tr>
                   <td colSpan={columns.length + 1} className="h-24 text-center">
@@ -402,11 +411,16 @@ const DataTable = ({
                   </td>
                 </tr>
               )}
+              {paddingBottom > 0 && (
+                <tr>
+                  <td style={{ height: `${paddingBottom}px` }} />
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-4 border-t mt-auto">
           <div className="flex items-center gap-2 order-2 md:order-1">
             <p className="text-sm font-medium whitespace-nowrap">Filas por página</p>
             <Select
@@ -419,13 +433,16 @@ const DataTable = ({
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                {[5, 10, 20, 30, 40, 50, 100, 500].map((pageSize) => (
                   <SelectItem key={pageSize} value={`${pageSize}`}>
                     {pageSize}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <span className="text-xs text-muted-foreground uppercase font-bold ml-2">
+              Total: {data.length}
+            </span>
           </div>
           <div className="flex justify-center md:justify-end w-full md:w-auto order-1 md:order-2 overflow-x-auto pb-2 md:pb-0">
             <Pagination>

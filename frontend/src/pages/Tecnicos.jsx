@@ -3,12 +3,6 @@ import { Layout } from '../Layout'
 import useTecnicosStore from '../stores/tecnicosStore'
 import DataTable from '../components/DataTable'
 
-const columns = [
-  { accessorKey: 'nombre', header: 'Nombre' },
-  { accessorKey: 'cedula', header: 'Cédula' },
-  { accessorKey: 'cargo', header: 'Cargo' },
-]
-
 const fields = [
   { key: 'nombre', label: 'Nombre', type: 'text', required: true },
   { key: 'cedula', label: 'Cédula', type: 'text' },
@@ -31,6 +25,12 @@ export const Tecnicos = () => {
   useEffect(() => {
     fetchTecnicos()
   }, [])
+
+  const columns = React.useMemo(() => [
+    { accessorKey: 'nombre', header: 'Nombre' },
+    { accessorKey: 'cedula', header: 'Cédula' },
+    { accessorKey: 'cargo', header: 'Cargo' },
+  ], [])
 
   if (loading) return <Layout><p>Cargando...</p></Layout>
   if (error) return <Layout><p>Error: {error}</p></Layout>

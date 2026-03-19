@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -17,6 +18,12 @@ export default defineConfig({
       additionalLegacyPolyfills: ["regenerator-runtime/runtime"],
     }),
   ],
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/tests/setup.js",
+    css: true,
+  },
   build: {
     target: "es2015",
     cssTarget: "chrome49", // Para asegurar compatibilidad de CSS en Android 5
