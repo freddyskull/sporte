@@ -16,8 +16,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Check, X } from 'lucide-react'
 
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
+import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect'
 
 /**
  * EditableCell
@@ -27,7 +29,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect'
  * @param {string} id - The ID of the record being edited
  * @param {string} field - The key of the field to update
  * @param {function} onSave - Async function(id, data) to save changes
- * @param {string} type - 'text', 'textarea', 'select', 'date', 'multi-select', 'searchable-select'
+ * @param {string} type - 'text', 'textarea', 'select', 'date', 'multi-select', 'searchable-select', 'searchable-multi-select'
  * @param {Array} options - Options for select/multi-select {value, label}
  * @param {React.ReactNode} children - The read-only view content
  */
@@ -94,7 +96,7 @@ export const EditableCell = ({
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      if (type !== 'textarea' && type !== 'multi-select' && type !== 'searchable-select') {
+      if (type !== 'textarea' && type !== 'multi-select' && type !== 'searchable-select' && type !== 'searchable-multi-select') {
         e.preventDefault()
         handleSave()
       }
@@ -116,6 +118,27 @@ export const EditableCell = ({
             }}
             placeholder="Buscar..."
           />
+        </div>
+      )
+    }
+
+    if (type === 'searchable-multi-select') {
+      return (
+        <div className="flex gap-1 items-start">
+          <div className="w-[250px]">
+            <SearchableMultiSelect
+              value={tempValue}
+              options={options}
+              onSelect={setTempValue}
+              placeholder="Buscar..."
+            />
+          </div>
+          <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => handleSave()}>
+            <Check className="h-4 w-4" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" onClick={handleCancel}>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       )
     }

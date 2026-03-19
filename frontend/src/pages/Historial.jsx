@@ -4,6 +4,7 @@ import { Layout } from '../Layout'
 import useHistorialStore from '../stores/historialStore'
 import useDepartamentosStore from '../stores/departamentosStore'
 import useTecnicosStore from '../stores/tecnicosStore'
+import useAsuntosStore from '../stores/asuntosStore'
 import DataTable from '../components/DataTable'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,13 +18,22 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { X, Filter } from 'lucide-react'
+import { X, Filter, Monitor, Cpu, Tag, Wifi, Info } from 'lucide-react'
+import { InformeTecnicoDialog } from '../components/InformeTecnicoDialog'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 const columns = [
   {
     accessorKey: 'asunto', header: 'Asunto',
     cell: ({ getValue }) => (
-      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap overflow-hidden h-[20px] line-clamp-1" title={getValue()}>
+      <div
+        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/50 text-foreground/70 border border-border uppercase truncate max-w-[80px] md:max-w-[150px]"
+        title={getValue()}
+      >
         {getValue()}
       </div>
     )
@@ -54,16 +64,20 @@ const columns = [
   },
   {
     id: 'tecnicos_asociados',
-    header: 'Técnicos Asociados',
+    header: 'Técnicos',
+    accessorFn: (row) => (row.expand?.tecnicos_asociados || []).map(t => t.nombre).join(', '),
     cell: ({ row }) => {
-      const tecnicos = row.original.expand?.tecnicos_asociados || []
+      const nombresCompletos = tecnicos.map(t => t.nombre).join(', ')
       return tecnicos.length ? (
-        <div className="flex flex-wrap gap-1">
-          {tecnicos.map((t) => (
-            <Badge key={t.id} variant="secondary">
-              {t.nombre}
+        <div className="flex gap-1 items-center cursor-help" title={`Técnicos: ${nombresCompletos}`}>
+          <Badge variant="secondary" className="truncate max-w-[100px]">
+            {tecnicos[0].nombre}
+          </Badge>
+          {tecnicos.length > 1 && (
+            <Badge variant="outline" className="text-[10px] font-bold">
+              +{tecnicos.length - 1}
             </Badge>
-          ))}
+          )}
         </div>
       ) : (
         <span className='text-xs'>N/A</span>
@@ -73,12 +87,23 @@ const columns = [
   {
     id: 'departamento',
     header: 'Departamento',
+    accessorFn: (row) => row.expand?.departamento?.nombre || '',
     cell: ({ row }) => {
-      const departamento = row.original.expand?.departamento
-      return departamento ? (
-        <Badge variant="outline">
-          {departamento.nombre}
-        </Badge>
+      const expandedData = row.original.expand?.departamento
+      const departamentos = Array.isArray(expandedData) ? expandedData : (expandedData ? [expandedData] : [])
+      const nombresCompletos = departamentos.map(d => d.nombre).join(', ')
+
+      return departamentos.length ? (
+        <div className="flex gap-1 items-center cursor-help" title={`Departamentos: ${nombresCompletos}`}>
+          <Badge variant="outline" className="truncate max-w-[120px]">
+            {departamentos[0].nombre}
+          </Badge>
+          {departamentos.length > 1 && (
+            <Badge variant="secondary" className="text-[10px] font-bold">
+              +{departamentos.length - 1}
+            </Badge>
+          )}
+        </div>
       ) : (
         <span className='text-xs'>N/A</span>
       )
@@ -168,6 +193,7 @@ const asuntoOptions = [
   { value: 'mantenimiento preventivo', label: 'Mantenimiento Preventivo' },
   { value: 'cableado estructurado', label: 'Cableado Estructurado' },
   { value: 'soporte de red', label: 'Soporte de red' },
+  { value: 'formateo', label: 'Formateo' },
 ]
 
 const statusOptions = [
@@ -178,24 +204,70 @@ const statusOptions = [
 
 const fields = [
   {
+    key: 'info_section',
+    label: 'Información General',
+    type: 'section',
+    gridCols: 'md:col-span-3'
+  },
+  {
     key: 'asunto',
     label: 'Asunto',
     type: 'select',
     options: asuntoOptions,
+    gridCols: 'md:col-span-1'
   },
   {
     key: 'status',
     label: 'Status',
     type: 'select',
     options: statusOptions,
+    gridCols: 'md:col-span-1'
   },
-  { key: 'descripcion_problema', label: 'Descripción del Problema', type: 'textarea', optional: true },
   {
     key: 'fecha_soporte',
     label: 'Fecha del Soporte',
     type: 'date',
-    defaultValue: new Date().toISOString().split('T')[0],
-    max: new Date().toISOString().split('T')[0],
+    defaultValue: new Date().toLocaleDateString('en-CA'),
+    max: new Date().toLocaleDateString('en-CA'),
+    gridCols: 'md:col-span-1'
+  },
+  { key: 'descripcion_problema', label: 'Descripción del Problema', type: 'textarea', optional: true, gridCols: 'md:col-span-3' },
+  {
+    key: 'formateo_section',
+    label: 'Detalles Técnicos (Solo Formateo)',
+    type: 'section',
+    gridCols: 'md:col-span-3',
+    showIf: (data) => data.asunto === 'formateo'
+  },
+  {
+    key: 'campo_auxiliar.especificaciones',
+    label: 'Especificaciones del Equipo',
+    type: 'textarea',
+    showIf: (data) => data.asunto === 'formateo',
+    gridCols: 'md:col-span-3'
+  },
+  {
+    key: 'campo_auxiliar.nombre_equipo',
+    label: 'Nombre del Equipo',
+    type: 'text',
+    showIf: (data) => data.asunto === 'formateo',
+    gridCols: 'md:col-span-1'
+  },
+  {
+    key: 'campo_auxiliar.serial_bienes',
+    label: 'Serial de Bienes',
+    type: 'text',
+    optional: true,
+    showIf: (data) => data.asunto === 'formateo',
+    gridCols: 'md:col-span-1'
+  },
+  {
+    key: 'campo_auxiliar.direccion_mac',
+    label: 'Dirección MAC',
+    type: 'text',
+    optional: true,
+    showIf: (data) => data.asunto === 'formateo',
+    gridCols: 'md:col-span-1'
   },
 ]
 
@@ -203,11 +275,13 @@ export const Historial = () => {
   const { historial, loading, error, fetchHistorial, createHistorial, updateHistorial, deleteHistorial } = useHistorialStore()
   const { departamentos, fetchDepartamentos } = useDepartamentosStore()
   const { tecnicos, fetchTecnicos } = useTecnicosStore()
+  const { asuntos, fetchAsuntos } = useAsuntosStore()
 
   useEffect(() => {
     fetchHistorial()
     fetchDepartamentos()
     fetchTecnicos()
+    fetchAsuntos()
   }, [])
 
   // -- Filters State --
@@ -286,6 +360,28 @@ export const Historial = () => {
   const departamentoOptions = departamentos.map(d => ({ value: d.id, label: d.nombre }))
   const tecnicoOptions = tecnicos.map(t => ({ value: t.id, label: t.nombre }))
 
+  // Merge static options with dynamic ones, removing duplicates by value
+  const mergedAsuntoOptions = React.useMemo(() => {
+    const dynamicOptions = asuntos.map(a => ({ value: a.nombre.toLowerCase(), label: a.nombre }))
+    // Map static with lowercase value to match
+    const staticOptsLowercase = asuntoOptions.map(o => ({ ...o, value: o.value.toLowerCase() }))
+
+    const allOptions = [...staticOptsLowercase, ...dynamicOptions]
+
+    // Deduplicate by value
+    const uniqueOptions = []
+    const seen = new Set()
+
+    for (const opt of allOptions) {
+      if (!seen.has(opt.value)) {
+        seen.add(opt.value)
+        // Capitalize label for consistent display if needed, but preserve original label from DB if available
+        uniqueOptions.push(opt)
+      }
+    }
+    return uniqueOptions
+  }, [asuntos])
+
   // Define columns INSIDE component to access Store data and options
   const columns = React.useMemo(() => [
     {
@@ -296,7 +392,7 @@ export const Historial = () => {
           id={row.original.id}
           field="asunto"
           type="select"
-          options={asuntoOptions}
+          options={mergedAsuntoOptions}
           onSave={updateHistorial}
         >
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap h-[20px]" title={getValue()}>
@@ -317,14 +413,9 @@ export const Historial = () => {
           onSave={updateHistorial}
         >
           <div
-            className={
-              `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border uppercase text-nowrap
-                    ${getValue() === 'pendiente' && 'bg-amarillo text-yellow-800'}
-                    ${getValue() === 'en progreso' && 'bg-verde text-green-800'}
-                    ${getValue() === 'resuelto' && 'bg-azul text-blue-800'}
-                    `
-            }
-            title={getValue()}>
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/50 text-foreground/70 border border-border uppercase truncate max-w-[80px] md:max-w-[150px]"
+            title={getValue()}
+          >
             {getValue()}
           </div>
         </EditableCell>
@@ -348,7 +439,8 @@ export const Historial = () => {
     },
     {
       id: 'tecnicos_asociados',
-      header: 'Técnicos Asociados',
+      header: 'Técnicos',
+      accessorFn: (row) => (row.expand?.tecnicos_asociados || []).map(t => t.nombre).join(', '),
       cell: ({ row }) => {
         const tecnicos = row.original.expand?.tecnicos_asociados || []
         // Value for editing is array of Ids
@@ -364,12 +456,18 @@ export const Historial = () => {
             onSave={updateHistorial}
           >
             {tecnicos.length ? (
-              <div className="flex flex-wrap gap-1">
-                {tecnicos.map((t) => (
-                  <Badge key={t.id} variant="secondary">
-                    {t.nombre}
+              <div
+                className="flex gap-1 items-center cursor-help"
+                title={`Técnicos: ${tecnicos.map(t => t.nombre).join(', ')}`}
+              >
+                <Badge variant="secondary" className="truncate max-w-[100px]">
+                  {tecnicos[0].nombre}
+                </Badge>
+                {tecnicos.length > 1 && (
+                  <Badge variant="outline" className="text-[10px] font-bold">
+                    +{tecnicos.length - 1}
                   </Badge>
-                ))}
+                )}
               </div>
             ) : (
               <span className='text-xs'>N/A</span>
@@ -381,9 +479,18 @@ export const Historial = () => {
     {
       id: 'departamento',
       header: 'Departamento',
+      accessorFn: (row) => {
+        const expandedData = row.expand?.departamento
+        const departamentos = Array.isArray(expandedData) ? expandedData : (expandedData ? [expandedData] : [])
+        return departamentos.map(d => d.nombre).join(', ')
+      },
       cell: ({ row }) => {
-        const departamento = row.original.expand?.departamento
-        // Value for editing is ID
+        const expandedData = row.original.expand?.departamento
+        const departamentos = Array.isArray(expandedData)
+          ? expandedData
+          : (expandedData ? [expandedData] : [])
+
+        // Value for editing is ID or array of IDs
         const rawValue = row.original.departamento
 
         return (
@@ -391,14 +498,24 @@ export const Historial = () => {
             value={rawValue}
             id={row.original.id}
             field="departamento"
-            type="searchable-select"
+            type="searchable-multi-select"
             options={departamentoOptions}
             onSave={updateHistorial}
           >
-            {departamento ? (
-              <Badge variant="outline">
-                {departamento.nombre}
-              </Badge>
+            {departamentos.length > 0 ? (
+              <div
+                className="flex gap-1 items-center cursor-help"
+                title={`Departamentos: ${departamentos.map(d => d.nombre).join(', ')}`}
+              >
+                <Badge variant="outline" className="truncate max-w-[120px]">
+                  {departamentos[0].nombre}
+                </Badge>
+                {departamentos.length > 1 && (
+                  <Badge variant="secondary" className="text-[10px] font-bold">
+                    +{departamentos.length - 1}
+                  </Badge>
+                )}
+              </div>
             ) : (
               <span className='text-xs'>N/A</span>
             )}
@@ -409,7 +526,7 @@ export const Historial = () => {
 
     {
       accessorKey: 'fecha_soporte',
-      header: 'Fecha soporte',
+      header: 'Fecha',
       cell: ({ getValue, row }) => {
         const rawValue = getValue()
 
@@ -450,24 +567,112 @@ export const Historial = () => {
         )
       },
     },
-  ], [asuntoOptions, statusOptions, departamentoOptions, tecnicoOptions, updateHistorial])
+    {
+      id: 'detalles_equipo',
+      header: 'Equipo',
+      accessorFn: (row) => {
+        const aux = row.campo_auxiliar || {}
+        return `${aux.nombre_equipo || ''} ${aux.serial_bienes || ''} ${aux.direccion_mac || ''} ${aux.especificaciones || ''}`.trim()
+      },
+      cell: ({ row }) => {
+        const aux = row.original.campo_auxiliar || {}
+        const hasData = aux.especificaciones || aux.serial_bienes || aux.direccion_mac || aux.nombre_equipo
+
+        if (!hasData) return <span className="text-xs text-muted-foreground italic">N/A</span>
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 flex gap-1.5 items-center text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1.5 max-w-[120px]">
+                <Monitor className="h-3.5 w-3.5 shrink-0" />
+                <span
+                  className="max-w-[80px] truncate text-[11px] font-bold uppercase tracking-tight"
+                  title={aux.nombre_equipo || 'Ver equipo'}
+                >
+                  {aux.nombre_equipo || 'Equipo'}
+                </span>
+                <Info className="h-3 w-3 opacity-40 shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm border-b pb-1 uppercase flex items-center gap-2">
+                  <Monitor className="h-4 w-4" /> Información del Equipo
+                </h4>
+
+                {aux.nombre_equipo && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Nombre del Equipo</span>
+                    <span className="text-sm font-medium">{aux.nombre_equipo}</span>
+                  </div>
+                )}
+
+                {aux.serial_bienes && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold flex items-center gap-1">
+                      <Tag className="h-3 w-3" /> Serial de Bienes
+                    </span>
+                    <span className="text-sm font-medium">{aux.serial_bienes}</span>
+                  </div>
+                )}
+
+                {aux.direccion_mac && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold flex items-center gap-1">
+                      <Wifi className="h-3 w-3" /> Dirección MAC
+                    </span>
+                    <code className="text-xs bg-secondary/40 p-1.5 rounded font-mono text-foreground break-all">
+                      {aux.direccion_mac}
+                    </code>
+                  </div>
+                )}
+
+                {aux.especificaciones && (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold flex items-center gap-1">
+                      <Cpu className="h-3 w-3" /> Especificaciones
+                    </span>
+                    <p className="text-xs bg-secondary/30 p-2 rounded italic whitespace-pre-wrap leading-relaxed text-foreground/90">
+                      {aux.especificaciones}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )
+      }
+    },
+  ], [mergedAsuntoOptions, statusOptions, departamentoOptions, tecnicoOptions, updateHistorial])
 
   const today = new Date()
-  const localToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+  const localToday = today.toLocaleDateString('en-CA')
 
   const dynamicFields = [
-    ...fields.map(f => f.key === 'fecha_soporte' ? { ...f, defaultValue: localToday, max: localToday } : f),
+    ...fields.map(f => {
+      if (f.key === 'fecha_soporte') return { ...f, defaultValue: localToday, max: localToday }
+      if (f.key === 'asunto') return { ...f, options: mergedAsuntoOptions }
+      return f
+    }),
+    {
+      key: 'asignacion_section',
+      label: 'Asignación y Ubicación',
+      type: 'section',
+      gridCols: 'md:col-span-3'
+    },
     {
       key: 'departamento',
       label: 'Departamento',
-      type: 'searchable-select',
+      type: 'searchable-multi-select',
       options: departamentoOptions,
+      gridCols: 'md:col-span-2'
     },
     {
       key: 'tecnicos_asociados',
-      label: 'Técnicos Asociados',
+      label: 'Técnicos',
       type: 'multi-select',
       options: tecnicoOptions,
+      gridCols: 'md:col-span-1'
     },
   ]
 
@@ -580,9 +785,13 @@ export const Historial = () => {
             <Filter className="h-4 w-4" />
           </Button>
         }
+        extraActions={(item, asMenuItem) => (
+          <InformeTecnicoDialog item={item} tecnicos={tecnicos} asMenuItem={asMenuItem} />
+        )}
         data={filteredHistorial}
         columns={columns}
         fields={dynamicFields}
+        draftKey="historial_create_draft"
         onCreate={(data) => {
           const formattedData = { ...data }
           if (formattedData.fecha_soporte) {
@@ -602,4 +811,3 @@ export const Historial = () => {
     </Layout>
   )
 }
-

@@ -23,7 +23,11 @@ const EstadisticasTecnicosDepartamentos = ({ selectedTecnico, selectedYear, sele
     return historialData.filter(h => {
       if (!h.fecha_soporte) return false
 
-      const date = new Date(h.fecha_soporte)
+      // Parseo robusto para evitar desfases de zona horaria
+      const datePart = String(h.fecha_soporte).split(/[T ]/)[0]
+      const [y, m, d] = datePart.split('-').map(Number)
+      const date = new Date(y, m - 1, d)
+
       const year = date.getFullYear()
       const month = date.getMonth() + 1
 
@@ -43,10 +47,18 @@ const EstadisticasTecnicosDepartamentos = ({ selectedTecnico, selectedYear, sele
       const tecnicosAsociados = h.expand?.tecnicos_asociados || []
       const isTecnicoInSupport = tecnicosAsociados.some(t => t.id === tecnicoId)
 
-      if (isTecnicoInSupport && h.expand?.departamento?.nombre) {
-        const deptName = h.expand.departamento.nombre
-        departamentoCount[deptName] = (departamentoCount[deptName] || 0) + 1
-        if (departamentoCount[deptName] > maxVal) maxVal = departamentoCount[deptName]
+      if (isTecnicoInSupport && h.expand?.departamento) {
+        const expandedDepts = Array.isArray(h.expand.departamento)
+          ? h.expand.departamento
+          : [h.expand.departamento]
+
+        expandedDepts.forEach(dept => {
+          if (dept.nombre) {
+            const deptName = dept.nombre
+            departamentoCount[deptName] = (departamentoCount[deptName] || 0) + 1
+            if (departamentoCount[deptName] > maxVal) maxVal = departamentoCount[deptName]
+          }
+        })
       }
     })
 

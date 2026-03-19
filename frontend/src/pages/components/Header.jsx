@@ -26,6 +26,10 @@ export const Header = () => {
       name: 'Estadísticas Técnicos',
       href: '/estadisticas-tecnicos',
     },
+    // {
+    //   name: 'Mapa 3D',
+    //   href: '/mapa',
+    // },
     {
       name: 'Nuevo soporte',
       href: '#',
@@ -40,7 +44,8 @@ export const Header = () => {
       <div className='container mx-auto flex-col gap-4 lg:flex-row flex justify-between items-center py-4 px-4'>
         <div>
           <Link to="/">
-            <img src="/logo.webp" className='w-52 md:w-42 dark:brightness-0 dark:invert' alt="Logo" />
+            <img src="/logo-dark.png" className="w-52 md:w-32 dark:hidden" alt="Logo" />
+            <img src="/logo-nodo-reverse.png" className="w-52 md:w-32 hidden dark:block" alt="Logo" />
           </Link>
         </div>
         <nav>

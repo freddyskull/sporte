@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -32,7 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { Plus, Edit, Trash2, ArrowUpDown, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import {
@@ -46,8 +46,10 @@ import {
 } from "@/components/ui/pagination"
 
 import DataForm from './DataForm'
+import useDraftStore from '../stores/draftStore'
+import { cn } from "@/lib/utils"
 
-const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraLeftContent }) => {
+const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraLeftContent, extraActions, draftKey }) => {
   const [globalFilter, setGlobalFilter] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mode, setMode] = useState('create') // 'create' or 'edit'
@@ -58,6 +60,18 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
   // We need to pass the correct initialData when opening the dialog.
   const [initialFormData, setInitialFormData] = useState({})
 
+  const { getDraft, setDraft, clearDraft } = useDraftStore()
+  const [hasDraft, setHasDraft] = useState(false)
+
+  // Synchronize draft presence
+  useEffect(() => {
+    if (!draftKey) return
+    const draft = getDraft(draftKey)
+    setHasDraft(!!draft && Object.keys(draft).length > 0)
+  }, [draftKey, getDraft, dialogOpen]) // Re-check when dialog closes/opens
+
+  const [sorting, setSorting] = useState([])
+
   const table = useReactTable({
     data,
     columns: [
@@ -65,22 +79,48 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
       {
         id: 'actions',
         header: 'Acciones',
+        enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEdit(row.original)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDelete(row.original.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          <div className="flex justify-end pr-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <span className="sr-only">Abrir menú de acciones</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-1 shadow-xl border-primary/10" align="end">
+                <div className="flex flex-col gap-1">
+                  {/* Acciones extra inyectadas desde fuera (Generar Informe) */}
+                  {extraActions && (
+                    <div className="border-b border-primary/5 pb-1 mb-1">
+                      {extraActions(row.original, true)}
+                    </div>
+                  )}
+
+                  {/* Acciones base del sistema */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start gap-2 h-9 text-xs font-semibold uppercase hover:bg-secondary/80"
+                    onClick={() => handleEdit(row.original)}
+                  >
+                    <Edit className="h-3.5 w-3.5 text-blue-500" />
+                    Editar Registro
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start gap-2 h-9 text-xs font-semibold uppercase text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(row.original.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Eliminar
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         ),
       },
@@ -89,9 +129,11 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
     globalFilterFn: 'includesString',
     state: {
       globalFilter,
+      sorting,
     },
     onGlobalFilterChange: setGlobalFilter,
   })
@@ -99,7 +141,29 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
   const handleCreate = () => {
     setMode('create')
     setSelectedItem(null)
-    setInitialFormData(fields.reduce((acc, field) => ({ ...acc, [field.key]: field.defaultValue || '' }), {}))
+
+    // Check for draft
+    if (draftKey) {
+      const draft = getDraft(draftKey)
+      if (draft) {
+        setInitialFormData(draft)
+        setDialogOpen(true)
+        return
+      }
+    }
+
+    const defaults = {}
+    fields.forEach(field => {
+      const defaultValue = field.defaultValue || ''
+      if (field.key.startsWith('campo_auxiliar.')) {
+        const auxKey = field.key.split('.')[1]
+        if (!defaults.campo_auxiliar) defaults.campo_auxiliar = {}
+        defaults.campo_auxiliar[auxKey] = defaultValue
+      } else {
+        defaults[field.key] = defaultValue
+      }
+    })
+    setInitialFormData(defaults)
     setDialogOpen(true)
   }
 
@@ -127,10 +191,21 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
   const handleFormSubmit = (formData) => {
     if (mode === 'create') {
       onCreate(formData)
+      if (draftKey) {
+        clearDraft(draftKey)
+        setHasDraft(false)
+      }
     } else {
       onUpdate(selectedItem.id, formData)
     }
     setDialogOpen(false)
+  }
+
+  const handleFormChange = (newData) => {
+    if (mode === 'create' && draftKey) {
+      setDraft(draftKey, newData)
+      setHasDraft(true)
+    }
   }
 
   const getPageNumbers = () => {
@@ -164,76 +239,104 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
   return (
     <Card>
       <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2 flex-1">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+          <div className="flex flex-col md:flex-row items-center gap-2 w-full md:flex-1">
             <Input
               placeholder="Buscar..."
               value={globalFilter ?? ''}
               onChange={(event) => setGlobalFilter(String(event.target.value))}
-              className="max-w-sm"
+              className="w-full md:max-w-sm"
             />
             {extraLeftContent}
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="uppercase" onClick={handleCreate}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="text-lg font-medium text-foreground">
-                  {mode === 'create' ? 'Crear Nuevo' : 'Editar'}
-                </DialogTitle>
-                <DialogDescription>
-                  {mode === 'create' ? 'Ingresa los datos para crear un nuevo registro.' : 'Edita los datos del registro.'}
-                </DialogDescription>
-              </DialogHeader>
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  className={cn("w-full md:w-auto uppercase transition-all duration-300", hasDraft ? "bg-amber-500 hover:bg-amber-600 text-white" : "")}
+                  onClick={handleCreate}
+                >
+                  {hasDraft ? (
+                    <>
+                      <span className="mr-2">Continuar</span>
+                      <Edit className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-medium text-foreground">
+                    {mode === 'create'
+                      ? (hasDraft ? 'Continuar Editando Borrador' : 'Crear Nuevo')
+                      : 'Editar'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {mode === 'create'
+                      ? (hasDraft ? 'Tienes datos sin guardar. Continúa donde lo dejaste.' : 'Ingresa los datos para crear un nuevo registro.')
+                      : 'Edita los datos del registro.'}
+                  </DialogDescription>
+                </DialogHeader>
 
-              {/* Force re-render of DataForm when dialog opens or mode/data changes to reset state */}
-              {dialogOpen && (
-                <DataForm
-                  fields={fields}
-                  initialData={initialFormData}
-                  onSubmit={handleFormSubmit}
-                  onCancel={() => setDialogOpen(false)}
-                  submitLabel={mode === 'create' ? 'Crear' : 'Actualizar'}
-                />
-              )}
-
-            </DialogContent >
-          </Dialog >
+                {dialogOpen && (
+                  <DataForm
+                    fields={fields}
+                    initialData={initialFormData}
+                    onSubmit={handleFormSubmit}
+                    onChange={handleFormChange}
+                    onCancel={() => setDialogOpen(false)}
+                    submitLabel={mode === 'create' ? 'Crear' : 'Actualizar'}
+                  />
+                )}
+              </DialogContent >
+            </Dialog >
+          </div>
         </div >
 
-        <div className="rounded-md border">
-          <table className="w-full">
+        <div className="rounded-md border overflow-x-auto">
+          <table className="w-full min-w-[600px] md:min-w-full">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className={`px-4 uppercase font-bold text-muted-foreground py-2 ${header.id === 'actions' ? 'text-right' : 'text-left'
+                      className={`px-4 uppercase font-bold text-[11px] md:text-xs text-muted-foreground py-2 ${header.id === 'actions' ? 'text-right' : 'text-left'
                         }`}
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 whitespace-nowrap",
+                            header.column.getCanSort() ? "cursor-pointer select-none" : ""
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                          {header.column.getCanSort() && (
+                            <ArrowUpDown className="h-3 w-3 opacity-50" />
+                          )}
+                        </div>
+                      )}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody>
+            <tbody className="divide-y">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-t">
+                  <tr key={row.id} className="hover:bg-muted/30 transition-colors">
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-2 text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <td key={cell.id} className="px-4 py-2 text-xs md:text-sm">
+                        <div className="line-clamp-2">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
                       </td>
                     ))}
                   </tr>
@@ -249,9 +352,9 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
           </table>
         </div>
 
-        <div className="flex items-center justify-between space-x-2 py-4">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">Filas por página</p>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-2 order-2 md:order-1">
+            <p className="text-sm font-medium whitespace-nowrap">Filas por página</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -270,7 +373,7 @@ const DataTable = ({ data, columns, onCreate, onUpdate, onDelete, fields, extraL
               </SelectContent>
             </Select>
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-center md:justify-end w-full md:w-auto order-1 md:order-2 overflow-x-auto pb-2 md:pb-0">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>

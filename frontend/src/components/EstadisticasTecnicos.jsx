@@ -5,18 +5,47 @@ import useHistorialStore from '../stores/historialStore'
 import useTecnicosStore from '../stores/tecnicosStore'
 import { Card, CardContent } from '@/components/ui/card'
 
+// Expanded color palette for more technicians
 const COLORS = [
-  '#0088FE',
-  '#00a152',
-  '#b2102f',
-  '#FF8042',
-  '#8884D8',
-  '#8bc34a',
-  '#ff9800',
-  '#e91e63',
-  '#03a9f4',
-  '#ffc107',
+  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8',
+  '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57',
+  '#ffc0cb', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5',
+  '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50'
 ]
+
+const CustomTooltip = ({ active, payload, total }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+
+    // Fallback manual percent calculation if Recharts doesn't provide it nicely
+    // Sometimes percent is undefined in custom tooltip depending on version/context
+    let percentVal = 0
+    if (payload[0].percent !== undefined) {
+      percentVal = payload[0].percent
+    } else if (total > 0) {
+      percentVal = data.value / total
+    }
+
+    return (
+      <div className="bg-background/95 border border-border p-3 rounded-md shadow-lg backdrop-blur-sm">
+        <p className="font-bold text-foreground mb-1">{data.name}</p>
+        <div className="flex flex-col text-sm text-muted-foreground gap-1">
+          <span className="flex justify-between gap-4">
+            <span>Soportes:</span>
+            <span className="font-medium text-foreground">{data.value}</span>
+          </span>
+          <span className="flex justify-between gap-4">
+            <span>Porcentaje:</span>
+            <span className="font-medium text-foreground">
+              {(percentVal * 100).toFixed(1)}%
+            </span>
+          </span>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
 
 const EstadisticasTecnicos = () => {
   const { historial, fetchHistorial } = useHistorialStore()
@@ -31,9 +60,31 @@ const EstadisticasTecnicos = () => {
   useEffect(() => {
     if (historial.length && tecnicos.length) {
       const now = new Date()
-      const semanal = filterByPeriod(historial, now, 7)
-      const mensual = filterByPeriod(historial, now, 30)
-      const anual = filterByPeriod(historial, now, 365)
+
+      // Helper function for date filtering
+      const filterByDate = (items, startDate) => {
+        return items.filter(h => {
+          if (!h.fecha_soporte) return false
+          const datePart = String(h.fecha_soporte).split(/[T ]/)[0]
+          const [y, m, d] = datePart.split('-').map(Number)
+          const date = new Date(y, m - 1, d)
+          return date >= startDate
+        })
+      }
+
+      // Semanal: Last 7 days (Rolling)
+      const last7Days = new Date(now)
+      last7Days.setDate(now.getDate() - 7)
+
+      // Mensual: Start of Current Month (1st of month)
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      // Anual: Start of Current Year (Jan 1st)
+      const startOfYear = new Date(now.getFullYear(), 0, 1)
+
+      const semanal = filterByDate(historial, last7Days)
+      const mensual = filterByDate(historial, startOfMonth)
+      const anual = filterByDate(historial, startOfYear)
 
       setData({
         semanal: processData(semanal),
@@ -43,11 +94,6 @@ const EstadisticasTecnicos = () => {
       })
     }
   }, [historial, tecnicos])
-
-  const filterByPeriod = (historial, now, days) => {
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-    return historial.filter(h => new Date(h.fecha_soporte) >= startDate)
-  }
 
   const processData = (filteredHistorial) => {
     const tecnicoCount = {}
@@ -59,17 +105,22 @@ const EstadisticasTecnicos = () => {
       })
     })
 
-    return Object.entries(tecnicoCount).map(([name, value]) => ({ name, value }))
+    // Sort by value descending for better visualization
+    return Object.entries(tecnicoCount)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
   }
 
   const renderPieChart = (chartData) => {
     if (!chartData || chartData.length === 0) {
       return (
-        <div className="flex h-[400px] w-full items-center justify-center text-slate-400 font-medium uppercase">
+        <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground font-medium uppercase">
           No hay datos para mostrar
         </div>
       )
     }
+
+    const total = chartData.reduce((sum, item) => sum + item.value, 0)
 
     return (
       <ResponsiveContainer width="100%" height={400}>
@@ -78,51 +129,60 @@ const EstadisticasTecnicos = () => {
             data={chartData}
             cx="50%"
             cy="50%"
-            labelLine={false}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            outerRadius={80}
-            fill="#8884d8"
+            innerRadius={60}
+            outerRadius={120}
+            paddingAngle={2}
             dataKey="value"
+            stroke="none"
           >
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="stroke-background hover:opacity-80 transition-opacity" />
             ))}
           </Pie>
-          <Tooltip />
-          <Legend />
+          <Tooltip content={<CustomTooltip total={total} />} />
+          <Legend
+            layout="vertical"
+            verticalAlign="middle"
+            align="right"
+            wrapperStyle={{
+              paddingLeft: "20px",
+              maxHeight: "350px",
+              overflowY: "auto",
+              fontSize: "12px"
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     )
   }
 
   return (
-    <Card >
-      <CardContent className="">
-        <div className="w-full lg:mx-auto">
-          <Tabs defaultValue="semanal" className="">
-            <div className='flex lg:justify-between  flex-col lg:flex-row  gap-4 items-center'>
-              <h2 className="text-sm font-bold text-nowrap uppercase text-foreground">Estadísticas de Técnicos</h2>
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
-                <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
-                <TabsTrigger value="anual">ANUAL</TabsTrigger>
-                <TabsTrigger value="general">GENERAL</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="semanal">
-              {renderPieChart(data.semanal)}
-            </TabsContent>
-            <TabsContent value="mensual">
-              {renderPieChart(data.mensual)}
-            </TabsContent>
-            <TabsContent value="anual">
-              {renderPieChart(data.anual)}
-            </TabsContent>
-            <TabsContent value="general">
-              {renderPieChart(data.general)}
-            </TabsContent>
-          </Tabs>
-        </div>
+    <Card className="h-full">
+      <CardContent className="p-6">
+        <Tabs defaultValue="general" className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-lg font-bold uppercase tracking-tight">Estadísticas de Técnicos</h2>
+            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+              <TabsTrigger value="semanal" className="text-xs">SEMANAL</TabsTrigger>
+              <TabsTrigger value="mensual" className="text-xs">MENSUAL</TabsTrigger>
+              <TabsTrigger value="anual" className="text-xs">ANUAL</TabsTrigger>
+              <TabsTrigger value="general" className="text-xs">GENERAL</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="semanal" className="mt-0">
+            {renderPieChart(data.semanal)}
+          </TabsContent>
+          <TabsContent value="mensual" className="mt-0">
+            {renderPieChart(data.mensual)}
+          </TabsContent>
+          <TabsContent value="anual" className="mt-0">
+            {renderPieChart(data.anual)}
+          </TabsContent>
+          <TabsContent value="general" className="mt-0">
+            {renderPieChart(data.general)}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )

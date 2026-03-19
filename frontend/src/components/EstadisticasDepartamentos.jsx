@@ -43,47 +43,77 @@ const EstadisticasDepartamentos = () => {
   useEffect(() => {
     if (historial.length && departamentos.length) {
       const now = new Date()
-      const semanal = filterByPeriod(historial, now, 7)
-      const mensual = filterByPeriod(historial, now, 30)
-      const anual = filterByPeriod(historial, now, 365)
+
+      const filterByDate = (items, startDate) => {
+        return items.filter(h => {
+          if (!h.fecha_soporte) return false
+          return new Date(h.fecha_soporte) >= startDate
+        })
+      }
+
+      // Semanal: Last 7 days
+      const last7Days = new Date(now)
+      last7Days.setDate(now.getDate() - 7)
+
+      // Mensual: Start of Month
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      // Anual: Start of Year
+      const startOfYear = new Date(now.getFullYear(), 0, 1)
+
+      const semanal = filterByDate(historial, last7Days)
+      const mensual = filterByDate(historial, startOfMonth)
+      const anual = filterByDate(historial, startOfYear)
 
       setData({
-        semanal: processData(semanal),
-        mensual: processData(mensual),
-        anual: processData(anual),
-        general: processData(historial),
+        semanal: { chartData: processData(semanal), totalCount: semanal.length },
+        mensual: { chartData: processData(mensual), totalCount: mensual.length },
+        anual: { chartData: processData(anual), totalCount: anual.length },
+        general: { chartData: processData(historial), totalCount: historial.length },
       })
     }
   }, [historial, departamentos])
-
-  const filterByPeriod = (historial, now, days) => {
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-    return historial.filter(h => new Date(h.fecha_soporte) >= startDate)
-  }
 
   const processData = (filteredHistorial) => {
     const departamentoStats = {}
 
     filteredHistorial.forEach(h => {
-      const departamento = h.expand?.departamento?.nombre
-      if (departamento) {
-        if (!departamentoStats[departamento]) {
-          departamentoStats[departamento] = {
-            count: 0,
-            tecnicos: {}
-          }
+      // Normalize departamentos to always be an array to handle both single and multi-select cases
+      let departamentosList = []
+
+      const deptExpand = h.expand?.departamento
+      if (deptExpand) {
+        if (Array.isArray(deptExpand)) {
+          departamentosList = deptExpand
+        } else {
+          departamentosList = [deptExpand]
         }
-
-        departamentoStats[departamento].count += 1
-
-        const tecnicos = h.expand?.tecnicos_asociados || []
-        tecnicos.forEach(t => {
-          const tName = t.nombre
-          if (tName) {
-            departamentoStats[departamento].tecnicos[tName] = (departamentoStats[departamento].tecnicos[tName] || 0) + 1
-          }
-        })
       }
+
+      // If no valid expand but maybe an ID is there (though we need name), skip
+      if (departamentosList.length === 0) return
+
+      departamentosList.forEach(deptObj => {
+        const departamentoName = deptObj.nombre
+        if (departamentoName) {
+          if (!departamentoStats[departamentoName]) {
+            departamentoStats[departamentoName] = {
+              count: 0,
+              tecnicos: {}
+            }
+          }
+
+          departamentoStats[departamentoName].count += 1
+
+          const tecnicos = h.expand?.tecnicos_asociados || []
+          tecnicos.forEach(t => {
+            const tName = t.nombre
+            if (tName) {
+              departamentoStats[departamentoName].tecnicos[tName] = (departamentoStats[departamentoName].tecnicos[tName] || 0) + 1
+            }
+          })
+        }
+      })
     })
 
     const result = Object.entries(departamentoStats).map(([name, stats]) => {
@@ -136,7 +166,7 @@ const EstadisticasDepartamentos = () => {
     return null
   }
 
-  const renderAreaChart = (chartData) => {
+  const renderAreaChart = ({ chartData, totalCount }) => {
     if (!chartData || chartData.length === 0) {
       return (
         <div className="flex h-[300px] w-full items-center justify-center text-slate-400 font-medium uppercase">
@@ -144,9 +174,6 @@ const EstadisticasDepartamentos = () => {
         </div>
       )
     }
-
-    // Calculate total for footer
-    const total = chartData.reduce((acc, curr) => acc + curr.value, 0)
 
     return (
       <div className="w-full">
@@ -201,7 +228,7 @@ const EstadisticasDepartamentos = () => {
           <div className="flex w-full items-start gap-2 text-sm">
             <div className="grid gap-2">
               <div className="flex items-center gap-2 font-medium leading-none">
-                Total de {total} soportes registrados <TrendingUp className="h-4 w-4" />
+                Total de {totalCount} soportes registrados <TrendingUp className="h-4 w-4" />
               </div>
               <div className="flex items-center gap-2 leading-none text-muted-foreground">
                 Visualizando distribución por departamentos
@@ -228,16 +255,16 @@ const EstadisticasDepartamentos = () => {
               </TabsList>
             </div>
             <TabsContent value="semanal">
-              {renderAreaChart(data.semanal)}
+              {renderAreaChart(data.semanal || {})}
             </TabsContent>
             <TabsContent value="mensual">
-              {renderAreaChart(data.mensual)}
+              {renderAreaChart(data.mensual || {})}
             </TabsContent>
             <TabsContent value="anual">
-              {renderAreaChart(data.anual)}
+              {renderAreaChart(data.anual || {})}
             </TabsContent>
             <TabsContent value="general">
-              {renderAreaChart(data.general)}
+              {renderAreaChart(data.general || {})}
             </TabsContent>
           </Tabs>
         </div>

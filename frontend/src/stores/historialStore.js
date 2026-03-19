@@ -2,6 +2,7 @@ import { create } from "zustand";
 import PocketBase from "pocketbase/cjs";
 
 const pb = new PocketBase("http://127.0.0.1:8090");
+pb.autoCancellation(false); // Disable auto-cancellation to prevent race conditions
 
 const useHistorialStore = create((set, get) => ({
   historial: [],
@@ -12,12 +13,14 @@ const useHistorialStore = create((set, get) => ({
 
   // Fetch all historial
   fetchHistorial: async () => {
-    if (get().loading) return;
+    // Removed loading check to force refresh if needed or handle race conditions better externally
+    // if (get().loading) return; 
     set({ loading: true, error: null });
     try {
       const records = await pb.collection("historial").getFullList({
         sort: "-fecha_soporte",
         expand: "departamento,tecnicos_asociados",
+        requestKey: null // Explicitly disable request cancellation for this call too
       });
 
       // Calcular el técnico con más soportes
@@ -53,10 +56,19 @@ const useHistorialStore = create((set, get) => ({
       // Calcular el departamento con más soportes
       const departamentoCounts = {};
       records.forEach((record) => {
-        if (record.expand?.departamento) {
-          const deptId = record.expand.departamento.id;
-          departamentoCounts[deptId] = (departamentoCounts[deptId] || 0) + 1;
+        let depts = [];
+        const expandDept = record.expand?.departamento;
+        if (expandDept) {
+           if (Array.isArray(expandDept)) {
+             depts = expandDept;
+           } else {
+             depts = [expandDept];
+           }
         }
+        
+        depts.forEach(dept => {
+           departamentoCounts[dept.id] = (departamentoCounts[dept.id] || 0) + 1;
+        });
       });
 
       let topDepartamento = null;
@@ -64,13 +76,25 @@ const useHistorialStore = create((set, get) => ({
       for (const [id, count] of Object.entries(departamentoCounts)) {
         if (count > maxDeptCount) {
           maxDeptCount = count;
-          // Encontrar el departamento en los registros expandidos
-          for (const record of records) {
-            if (record.expand?.departamento?.id === id) {
-              topDepartamento = record.expand.departamento;
-              break;
-            }
-          }
+          // Encontrar el objeto departamento completo para guardarlo en el store
+          // Buscamos en TODOS los records hasta encontrar el ID
+           for (const record of records) {
+             let depts = [];
+             const expandDept = record.expand?.departamento;
+             if (expandDept) {
+                if (Array.isArray(expandDept)) {
+                  depts = expandDept;
+                } else {
+                  depts = [expandDept];
+                }
+             }
+             
+             const found = depts.find(d => d.id === id);
+             if (found) {
+               topDepartamento = found;
+               break;
+             }
+           }
         }
       }
 

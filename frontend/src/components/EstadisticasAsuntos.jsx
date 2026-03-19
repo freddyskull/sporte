@@ -15,9 +15,27 @@ const EstadisticasAsuntos = () => {
   useEffect(() => {
     if (historial.length) {
       const now = new Date()
-      const semanal = filterByPeriod(historial, now, 7)
-      const mensual = filterByPeriod(historial, now, 30)
-      const anual = filterByPeriod(historial, now, 365)
+
+      const filterByDate = (items, startDate) => {
+        return items.filter(h => {
+          if (!h.fecha_soporte) return false
+          return new Date(h.fecha_soporte) >= startDate
+        })
+      }
+
+      // Semanal: Last 7 days
+      const last7Days = new Date(now)
+      last7Days.setDate(now.getDate() - 7)
+
+      // Mensual: Start of Month
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      // Anual: Start of Year
+      const startOfYear = new Date(now.getFullYear(), 0, 1)
+
+      const semanal = filterByDate(historial, last7Days)
+      const mensual = filterByDate(historial, startOfMonth)
+      const anual = filterByDate(historial, startOfYear)
 
       setData({
         semanal: processData(semanal),
@@ -27,11 +45,6 @@ const EstadisticasAsuntos = () => {
       })
     }
   }, [historial])
-
-  const filterByPeriod = (historial, now, days) => {
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-    return historial.filter(h => new Date(h.fecha_soporte) >= startDate)
-  }
 
   const processData = (filteredHistorial) => {
     const asuntoStats = {}

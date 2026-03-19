@@ -23,7 +23,11 @@ const EstadisticasTecnicosRadar = ({ selectedTecnico, selectedYear, selectedMont
     return historialData.filter(h => {
       if (!h.fecha_soporte) return false
 
-      const date = new Date(h.fecha_soporte)
+      // Parseo robusto para evitar desfases de zona horaria
+      const datePart = String(h.fecha_soporte).split(/[T ]/)[0]
+      const [y, m, d] = datePart.split('-').map(Number)
+      const date = new Date(y, m - 1, d)
+
       const year = date.getFullYear()
       const month = date.getMonth() + 1
 
