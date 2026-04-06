@@ -215,7 +215,7 @@ const SoporteDialog = ({
     {
       key: 'tecnicos_asociados',
       label: 'Técnicos Asociados',
-      type: 'multi-select',
+      type: 'searchable-multi-select',
       options: tecnicoOptions,
       gridCols: 'md:col-span-1'
     },

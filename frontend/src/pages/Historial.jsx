@@ -21,6 +21,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { X, Filter, Monitor, Search, RotateCcw } from 'lucide-react'
 import { InformeTecnicoDialog } from '../components/InformeTecnicoDialog'
+import { ActaEntregaDialog } from '../components/ActaEntregaDialog'
 import {
   Popover,
   PopoverContent,
@@ -194,7 +195,7 @@ export const Historial = () => {
       accessorKey: 'asunto', header: 'Asunto',
       cell: ({ getValue, row }) => (
         <EditableCell value={getValue()} id={row.original.id} field="asunto" type="select" options={mergedAsuntoOptions} onSave={updateHistorial}>
-          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase text-nowrap h-[20px]" title={getValue()}>
+          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase truncate max-w-[120px] md:max-w-[180px] h-[20px]" title={getValue()}>
             {getValue()}
           </div>
         </EditableCell>
@@ -230,18 +231,40 @@ export const Historial = () => {
       cell: ({ row }) => {
         const tecnicosExpand = row.original.expand?.tecnicos_asociados || []
         return (
-          <EditableCell value={row.original.tecnicos_asociados || []} id={row.original.id} field="tecnicos_asociados" type="multi-select" options={tecnicoOptions} onSave={updateHistorial}>
-            {tecnicosExpand.length ? (
-              <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center">
+            <EditableCell value={row.original.tecnicos_asociados || []} id={row.original.id} field="tecnicos_asociados" type="multi-select" options={tecnicoOptions} onSave={updateHistorial}>
+              {tecnicosExpand.length ? (
                 <Badge variant="secondary" className="truncate max-w-[100px] text-[10px] uppercase">
                   {tecnicosExpand[0].nombre}
                 </Badge>
-                {tecnicosExpand.length > 1 && (
-                  <Badge variant="outline" className="text-[10px] font-bold">+{tecnicosExpand.length - 1}</Badge>
-                )}
-              </div>
-            ) : <span className='text-xs'>N/A</span>}
-          </EditableCell>
+              ) : <span className='text-xs'>N/A</span>}
+            </EditableCell>
+            
+            {tecnicosExpand.length > 1 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Badge variant="outline" className="text-[10px] font-bold cursor-pointer hover:bg-secondary transition-colors">
+                    +{tecnicosExpand.length - 1}
+                  </Badge>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3 shadow-xl border-primary/10" align="start">
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase border-b pb-1 mb-2">
+                      Técnicos Asignados ({tecnicosExpand.length})
+                    </h4>
+                    <div className="flex flex-col gap-1.5">
+                      {tecnicosExpand.map((tec) => (
+                        <div key={tec.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/30 border border-primary/5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                          <span className="text-xs font-bold uppercase tracking-tight">{tec.nombre}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         )
       },
     },
@@ -251,19 +274,42 @@ export const Historial = () => {
       cell: ({ row }) => {
         const expandedData = row.original.expand?.departamento
         const depts = Array.isArray(expandedData) ? expandedData : (expandedData ? [expandedData] : [])
+        const allDeptsNames = depts.map(d => d.nombre).join(', ')
         return (
-          <EditableCell value={row.original.departamento} id={row.original.id} field="departamento" type="searchable-multi-select" options={departamentoOptions} onSave={updateHistorial}>
-            {depts.length > 0 ? (
-              <div className="flex gap-1 items-center">
-                <Badge variant="outline" className="truncate max-w-[120px] text-[10px] uppercase">
+          <div className="flex gap-1 items-center">
+            <EditableCell value={row.original.departamento} id={row.original.id} field="departamento" type="searchable-multi-select" options={departamentoOptions} onSave={updateHistorial}>
+              {depts.length > 0 ? (
+                <Badge variant="outline" className="truncate max-w-[120px] text-[10px] uppercase" title={allDeptsNames}>
                   {depts[0].nombre}
                 </Badge>
-                {depts.length > 1 && (
-                  <Badge variant="secondary" className="text-[10px] font-bold">+{depts.length - 1}</Badge>
-                )}
-              </div>
-            ) : <span className='text-xs'>N/A</span>}
-          </EditableCell>
+              ) : <span className='text-xs'>N/A</span>}
+            </EditableCell>
+            
+            {depts.length > 1 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Badge variant="secondary" className="text-[10px] font-bold cursor-pointer hover:bg-secondary transition-colors">
+                    +{depts.length - 1}
+                  </Badge>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3 shadow-xl border-primary/10" align="start">
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-[10px] text-muted-foreground uppercase border-b pb-1 mb-2">
+                      Departamentos Asignados ({depts.length})
+                    </h4>
+                    <div className="flex flex-col gap-1.5">
+                      {depts.map((dept) => (
+                        <div key={dept.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/30 border border-primary/5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+                          <span className="text-xs font-bold uppercase tracking-tight">{dept.nombre}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         )
       }
     },
@@ -277,7 +323,7 @@ export const Historial = () => {
         const formattedDate = localDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: '2-digit' })
         return (
           <EditableCell value={rawValue} id={row.original.id} field="fecha_soporte" type="date" onSave={updateHistorial}>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-500 border border-slate-200 uppercase">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-500 border border-slate-200 uppercase" title={formattedDate}>
               {formattedDate}
             </span>
           </EditableCell>
@@ -406,7 +452,12 @@ export const Historial = () => {
         showSearch={false}
         pagination={pagination}
         onPaginationChange={setPagination}
-        extraActions={(item, asMenuItem) => <InformeTecnicoDialog item={item} tecnicos={tecnicos} asMenuItem={asMenuItem} />}
+        extraActions={(item, asMenuItem) => (
+          <>
+            <InformeTecnicoDialog item={item} tecnicos={tecnicos} asMenuItem={asMenuItem} />
+            <ActaEntregaDialog item={item} tecnicos={tecnicos} asMenuItem={asMenuItem} />
+          </>
+        )}
         data={filteredHistorial}
         columns={columns}
         onDelete={deleteHistorial}

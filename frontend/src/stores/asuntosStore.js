@@ -14,7 +14,7 @@ const useAsuntosStore = create((set) => ({
       // Intentamos obtener la colección 'asuntos_historial'
       // Si no existe, el usuario verá un error, pero es el camino correcto para datos dinámicos
       const records = await pb.collection("asuntos_historial").getFullList({
-        sort: "nombre",
+        sort: "-created",
       });
       set({ asuntos: records, loading: false });
     } catch (error) {
@@ -28,7 +28,7 @@ const useAsuntosStore = create((set) => ({
     try {
       const record = await pb.collection("asuntos_historial").create({ nombre });
       set((state) => ({
-        asuntos: [...state.asuntos, record].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+        asuntos: [record, ...state.asuntos],
         loading: false,
       }));
       return record;

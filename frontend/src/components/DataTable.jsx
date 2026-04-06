@@ -73,7 +73,7 @@ const DataTable = ({
   const [initialFormData, setInitialFormData] = useState({})
   const { getDraft, setDraft, clearDraft } = useDraftStore()
   const [hasDraft, setHasDraft] = useState(false)
-  const [sorting, setSorting] = useState([])
+  const [sorting, setSorting] = useState([{ id: 'created', desc: true }])
 
   // Paginación interna si no se provee por props
   const [internalPagination, setInternalPagination] = useState({
@@ -394,13 +394,18 @@ const DataTable = ({
                       data-index={virtualRow.index}
                       ref={node => virtualizer.measureElement(node)}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-4 py-2 text-xs md:text-sm border-b">
-                          <div className="line-clamp-2">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const value = cell.getContext().getValue()
+                        const titleValue = typeof value === 'string' || typeof value === 'number' ? String(value) : undefined
+                        
+                        return (
+                          <td key={cell.id} className="px-4 py-2 text-xs md:text-sm border-b">
+                            <div className="truncate whitespace-nowrap" title={titleValue}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </div>
+                          </td>
+                        )
+                      })}
                     </tr>
                   )
                 })
