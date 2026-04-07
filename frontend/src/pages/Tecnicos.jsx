@@ -3,6 +3,8 @@ import { Layout } from '../Layout'
 import useTecnicosStore from '../stores/tecnicosStore'
 import DataTable from '../components/DataTable'
 
+import { ReporteIndividualDialog } from '../components/ReporteIndividualDialog'
+
 const fields = [
   { key: 'nombre', label: 'Nombre', type: 'text', required: true },
   { key: 'cedula', label: 'Cédula', type: 'text' },
@@ -48,6 +50,9 @@ export const Tecnicos = () => {
         onCreate={createTecnico}
         onUpdate={updateTecnico}
         onDelete={deleteTecnico}
+        extraActions={(tecnico, asMenuItem) => (
+          <ReporteIndividualDialog tecnico={tecnico} asMenuItem={asMenuItem} />
+        )}
       />
     </Layout>
   )
