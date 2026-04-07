@@ -1,3 +1,73 @@
+## v0.36.8
+
+- Fixed OAuth2 client secret reset when serializing a cached collection model.
+
+- Bumped all Go and npm deps.
+    _This should also silent recent spam reports and security scanners regarding [CVE-2026-33809](https://www.cve.org/CVERecord?id=CVE-2026-33809) `golang.org/x/image` bug (it is not an issue in PocketBase because we don't support TIFF thumbs)._
+
+
+## v0.36.7
+
+- Fixed high memory usage with large file uploads ([#7572](https://github.com/pocketbase/pocketbase/discussions/7572)).
+
+- Updated the rate limiter reset rules to follow a more traditional fixed window strategy _(aka. to be more close to how it is presented in the UI - allow max X user requests under Ys)_ since several users complained that the older algorithm was not intuitive and not suitable for large intervals.
+    _Approximated sliding window strategy was also suggested as a better compromise option to help minimize traffic spikes right after reset but the additional tracking could introduce some overhead and for now it is left aside until we have more tests._
+
+- Updated `modernc.org/sqlite` to v1.46.2 and SQLite 3.51.3.
+    _⚠️ SQLite 3.51.3 fixed a [database corruption bug](https://sqlite.org/wal.html#walresetbug) that is very unlikely to happen (with PocketBase even more so because we queue on app level all writes and explicit transactions through a single db connection), but still it is advised to upgrade._
+
+- Updated other minor Go and npm deps.
+    _The min Go version in the go.mod of the package was also bumped to Go 1.25.0 because some of the newer dep versions require it._
+
+
+## v0.36.6
+
+- Set `NumberField.OnlyInt:true` for the generated View collection schema fields when a view column expression is known to return int-only values ([#7538](https://github.com/pocketbase/pocketbase/issues/7538)).
+
+- Documented the `unmarshal` JSVM helper ([#7543](https://github.com/pocketbase/pocketbase/issues/7543)).
+
+- Added extra read check after the `Store.GetOrSet` write lock to prevent races overwriting an already existing value.
+
+- Added empty records check for the additional client-side filter's ListRule constraint that was introduced in v0.32.0 ([presentator#206](https://github.com/presentator/presentator/issues/206)).
+
+- Set a fixed `routine.FireAndForget()` debug stack trace limit to 2KB.
+
+- Bumped min Go GitHub action version to 1.26.1 because it comes with some [minor bug and security fixes](https://github.com/golang/go/issues?q=milestone%3AGo1.26.1).
+
+- Typos and other minor doc fixes.
+
+
+## v0.36.5
+
+- Disabled collection and fields name normalization while in IME mode ([#7532](https://github.com/pocketbase/pocketbase/pull/7532); thanks @miaopan607).
+
+- Updated `modernc.org/sqlite` to v1.46.1 _(resets connection state on Tx.Commit failure)_.
+
+
+## v0.36.4
+
+- Made the optional `Bearer` token prefix case-insensitive ([#7525](https://github.com/pocketbase/pocketbase/pull/7525); thanks @benjamesfleming).
+
+- Enabled `$filesystem.s3(...)` and `$filesystem.local(...)` JSVM bindings ([#7526](https://github.com/pocketbase/pocketbase/issues/7526)).
+
+
+## v0.36.3
+
+- Added `Accept-Encoding: identity` to the S3 requests per the suggestion in [#7523](https://github.com/pocketbase/pocketbase/issues/7523).
+    _This should help fixing the 0-bytes file response when S3 API compression is enabled._
+
+- Bumped min Go GitHub action version to 1.26.0 _(it comes with minor [GC performance improvements](https://go.dev/doc/go1.26#runtime))_.
+
+- Other minor fixes _(updated `modernc.org/sqlite` to v1.45.0, updated `goja_nodejs` adding `Buffer.concat`, updated the arguments of `app.DeleteTable(...)`, `app.DeleteView(...)` and other similar methods to make it more clear that they are dangerous and shouldn't be used with untrusted input, etc.)_.
+
+
+## v0.36.2
+
+- Updated `modernc.org/sqlite` to v1.44.3 _(race check fix)_, `goja` _(circular references fix)_ and other go deps.
+
+- Other minor fixes _(updated tests to silence some of the race detector errors, updated `FindFirstRecordByData` with more clear error message when missing or invalid key is used, etc.)_.
+
+
 ## v0.36.1
 
 - Reverted the `DISTINCT` with `GROUP BY` replacement optimization from v0.36.0 as it was reported to negatively impact the indexes utilization for some queries
