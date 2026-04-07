@@ -39,7 +39,7 @@ const fields = [
   {
     key: 'asunto',
     label: 'Asunto',
-    type: 'select',
+    type: 'searchable-select',
     options: asuntoOptions,
     gridCols: 'md:col-span-1'
   },
@@ -171,7 +171,12 @@ const SoporteDialog = ({
   }, [fetchDepartamentos, fetchTecnicos, fetchAsuntos])
 
   const departamentoOptions = useMemo(() => departamentos.map(d => ({ value: d.id, label: d.nombre })), [departamentos])
-  const tecnicoOptions = useMemo(() => tecnicos.map(t => ({ value: t.id, label: t.nombre })), [tecnicos])
+  const tecnicoOptions = useMemo(() => 
+    tecnicos
+      .filter(t => !t.cargo?.toUpperCase().includes('JEFE'))
+      .map(t => ({ value: t.id, label: t.nombre })), 
+    [tecnicos]
+  )
 
   const mergedAsuntoOptions = useMemo(() => {
     const dynamicOptions = asuntos.map(a => ({ value: a.nombre.toLowerCase(), label: a.nombre }))

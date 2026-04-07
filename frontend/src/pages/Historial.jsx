@@ -61,7 +61,7 @@ export const Historial = () => {
   const [selectedAsunto, setSelectedAsunto] = useState(searchParams.get('asunto') || 'all')
   const [selectedDepts, setSelectedDepts] = useState(searchParams.get('depts')?.split(',').filter(Boolean) || [])
   const [selectedTecnicos, setSelectedTecnicos] = useState(searchParams.get('tecs')?.split(',').filter(Boolean) || [])
-  
+
   // -- Paginación --
   const [pagination, setPagination] = useState({
     pageIndex: parseInt(searchParams.get('page') || '0'),
@@ -82,7 +82,7 @@ export const Historial = () => {
     if (selectedDepts.length > 0) params.set('depts', selectedDepts.join(','))
     if (selectedTecnicos.length > 0) params.set('tecs', selectedTecnicos.join(','))
     if (showFilters) params.set('show', 'true')
-    
+
     // Paginación
     params.set('page', pagination.pageIndex.toString())
     params.set('limit', pagination.pageSize.toString())
@@ -100,7 +100,12 @@ export const Historial = () => {
   }, [historial])
 
   const departamentoOptions = useMemo(() => departamentos.map(d => ({ value: d.id, label: d.nombre })), [departamentos])
-  const tecnicoOptions = useMemo(() => tecnicos.map(t => ({ value: t.id, label: t.nombre })), [tecnicos])
+  const tecnicoOptions = useMemo(() => 
+    tecnicos
+      .filter(t => !t.cargo?.toUpperCase().includes('JEFE'))
+      .map(t => ({ value: t.id, label: t.nombre })), 
+    [tecnicos]
+  )
 
   const mergedAsuntoOptions = useMemo(() => {
     const dynamicOptions = asuntos.map(a => ({ value: a.nombre.toLowerCase(), label: a.nombre }))
@@ -142,9 +147,9 @@ export const Historial = () => {
           aux.direccion_mac,
           aux.especificaciones,
           ...(item.expand?.tecnicos_asociados?.map(t => t.nombre) || []),
-          ...(Array.isArray(item.expand?.departamento) 
-              ? item.expand?.departamento.map(d => d.nombre) 
-              : [item.expand?.departamento?.nombre])
+          ...(Array.isArray(item.expand?.departamento)
+            ? item.expand?.departamento.map(d => d.nombre)
+            : [item.expand?.departamento?.nombre])
         ].join(' ').toLowerCase()
         if (!searchableText.includes(term)) return false
       }
@@ -193,23 +198,25 @@ export const Historial = () => {
   const columns = useMemo(() => [
     {
       accessorKey: 'asunto', header: 'Asunto',
-      cell: ({ getValue, row }) => (
-        <EditableCell value={getValue()} id={row.original.id} field="asunto" type="select" options={mergedAsuntoOptions} onSave={updateHistorial}>
-          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase truncate max-w-[120px] md:max-w-[180px] h-[20px]" title={getValue()}>
-            {getValue()}
-          </div>
-        </EditableCell>
-      )
+      cell: ({ getValue, row }) => {
+        const displayValue = row.original.expand?.asunto_rel?.nombre || getValue()
+        return (
+          <EditableCell value={getValue()} id={row.original.id} field="asunto" type="searchable-select" options={mergedAsuntoOptions} onSave={updateHistorial}>
+            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-blue-200 uppercase truncate max-w-[120px] md:max-w-[180px] h-[20px]" title={displayValue}>
+              {displayValue}
+            </div>
+          </EditableCell>
+        )
+      }
     },
     {
       accessorKey: 'status', header: 'Status',
       cell: ({ getValue, row }) => (
         <EditableCell value={getValue()} id={row.original.id} field="status" type="select" options={statusOptions} onSave={updateHistorial}>
-          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase truncate max-w-[80px] md:max-w-[150px] ${
-            getValue() === 'resuelto' ? 'bg-green-100 text-green-700 border-green-200' : 
-            getValue() === 'en progreso' ? 'bg-blue-100 text-blue-700 border-blue-200' : 
-            'bg-amber-100 text-amber-700 border-amber-200'
-          }`} title={getValue()}>
+          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase truncate max-w-[80px] md:max-w-[150px] ${getValue() === 'resuelto' ? 'bg-green-100 text-green-700 border-green-200' :
+            getValue() === 'en progreso' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+              'bg-amber-100 text-amber-700 border-amber-200'
+            }`} title={getValue()}>
             {getValue()}
           </div>
         </EditableCell>
@@ -239,7 +246,7 @@ export const Historial = () => {
                 </Badge>
               ) : <span className='text-xs'>N/A</span>}
             </EditableCell>
-            
+
             {tecnicosExpand.length > 1 && (
               <Popover>
                 <PopoverTrigger asChild>
@@ -284,7 +291,7 @@ export const Historial = () => {
                 </Badge>
               ) : <span className='text-xs'>N/A</span>}
             </EditableCell>
-            
+
             {depts.length > 1 && (
               <Popover>
                 <PopoverTrigger asChild>
@@ -371,18 +378,18 @@ export const Historial = () => {
             <p className="text-xs text-muted-foreground uppercase font-medium">Gestión y auditoría de soportes técnicos</p>
           </div>
           <div className="flex flex-col items-end gap-1">
-             <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-md">
-               {filteredHistorial.length} RESULTADOS
-             </span>
+            <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-1 rounded-md">
+              {filteredHistorial.length} RESULTADOS
+            </span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="BUSCAR POR EQUIPO, TÉCNICO, PROBLEMA..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} className="pl-10 uppercase text-xs font-bold bg-background border-2" />
+            <Input placeholder="BUSCAR POR EQUIPO, TÉCNICO, PROBLEMA..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} className="pl-10 uppercase text-xs font-bold bg-white border-2" />
           </div>
-          <Button variant={showFilters ? "default" : "outline"} size="sm" onClick={() => setShowFilters(!showFilters)} className="h-10 gap-2 font-bold uppercase text-xs">
+          <Button variant={showFilters ? "default" : "outline"} size="sm" onClick={() => setShowFilters(!showFilters)} className="h-10 gap-2 font-bold uppercase text-xs bg-primary! text-primary-foreground!">
             <Filter className="h-4 w-4" /> {showFilters ? 'Ocultar Filtros' : 'Filtros Avanzados'}
           </Button>
           {(searchTerm || startDate || endDate || selectedYear !== 'all' || selectedStatus !== 'all' || selectedAsunto !== 'all' || selectedDepts.length > 0 || selectedTecnicos.length > 0) && (
@@ -399,15 +406,15 @@ export const Historial = () => {
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">Rango de Fecha</Label>
                   <div className="flex gap-2 items-center">
-                    <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} className="h-9 text-xs font-bold uppercase bg-background" />
+                    <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} className="h-9 text-xs font-bold uppercase bg-background" />
                     <span className="text-muted-foreground/50">/</span>
-                    <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} className="h-9 text-xs font-bold uppercase bg-background" />
+                    <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} className="h-9 text-xs font-bold uppercase bg-background" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Estatus</Label>
-                    <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setPagination(prev => ({ ...prev, pageIndex: 0 })); }}>
+                    <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setPagination(prev => ({ ...prev, pageIndex: 0 })) }}>
                       <SelectTrigger className="h-9 text-xs font-bold uppercase bg-background">
                         <SelectValue placeholder="STATUS" />
                       </SelectTrigger>
@@ -419,7 +426,7 @@ export const Historial = () => {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Año</Label>
-                    <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setPagination(prev => ({ ...prev, pageIndex: 0 })); }}>
+                    <Select value={selectedYear} onValueChange={(val) => { setSelectedYear(val); setPagination(prev => ({ ...prev, pageIndex: 0 })) }}>
                       <SelectTrigger className="h-9 text-xs font-bold uppercase bg-background">
                         <SelectValue placeholder="AÑO" />
                       </SelectTrigger>
@@ -432,15 +439,15 @@ export const Historial = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">Asunto</Label>
-                  <SearchableSelect value={selectedAsunto === 'all' ? '' : selectedAsunto} options={mergedAsuntoOptions} onSelect={(val) => { setSelectedAsunto(val || 'all'); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} placeholder="BUSCAR ASUNTO..." />
+                  <SearchableSelect value={selectedAsunto === 'all' ? '' : selectedAsunto} options={mergedAsuntoOptions} onSelect={(val) => { setSelectedAsunto(val || 'all'); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} placeholder="BUSCAR ASUNTO..." />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">Departamentos</Label>
-                  <SearchableMultiSelect value={selectedDepts} options={departamentoOptions} onSelect={(val) => { setSelectedDepts(val); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} placeholder="TODOS LOS DEPTOS" />
+                  <SearchableMultiSelect value={selectedDepts} options={departamentoOptions} onSelect={(val) => { setSelectedDepts(val); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} placeholder="TODOS LOS DEPTOS" />
                 </div>
                 <div className="space-y-1.5 lg:col-span-2">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">Técnicos Responsables</Label>
-                  <SearchableMultiSelect value={selectedTecnicos} options={tecnicoOptions} onSelect={(val) => { setSelectedTecnicos(val); setPagination(prev => ({ ...prev, pageIndex: 0 })); }} placeholder="TODOS LOS TÉCNICOS" />
+                  <SearchableMultiSelect value={selectedTecnicos} options={tecnicoOptions} onSelect={(val) => { setSelectedTecnicos(val); setPagination(prev => ({ ...prev, pageIndex: 0 })) }} placeholder="TODOS LOS TÉCNICOS" />
                 </div>
               </div>
             </CardContent>
@@ -462,9 +469,9 @@ export const Historial = () => {
         columns={columns}
         onDelete={deleteHistorial}
         renderDialog={({ open, setOpen, mode, item, onSuccess }) => (
-          <SoporteDialog 
-            open={open} onOpenChange={setOpen} mode={mode} item={item} 
-            onSuccess={() => { onSuccess(); fetchHistorial(); }}
+          <SoporteDialog
+            open={open} onOpenChange={setOpen} mode={mode} item={item}
+            onSuccess={() => { onSuccess(); fetchHistorial() }}
           />
         )}
       />
