@@ -11,7 +11,7 @@ export const Header = () => {
       href: '/',
     },
     {
-      name: 'Tecnicos',
+      name: 'Personal',
       href: '/tecnicos',
     },
     {
@@ -29,7 +29,7 @@ export const Header = () => {
     {
       name: 'Nuevo soporte',
       href: '#',
-      className: 'bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors',
+      className: 'bg-primary text-primary-foreground! px-4 py-2 rounded-md hover:bg-primary/90 transition-colors',
     }
   ]
 
@@ -53,7 +53,7 @@ export const Header = () => {
                 return (
                   <li key={item.name}>
                     <SoporteDialog>
-                      <button className={`font-bold uppercase text-sm ${item.className}`}>
+                      <button className={`font-bold uppercase text-sm  ${item.className}`}>
                         {item.name}
                       </button>
                     </SoporteDialog>
