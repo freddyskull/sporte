@@ -87,7 +87,7 @@ export const SearchableMultiSelect = ({ value, options, onSelect, placeholder })
           <CommandInput placeholder={`Buscar ${placeholder}...`} />
           <CommandList>
             <CommandEmpty>No se encontró nada.</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-auto">
+            <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
