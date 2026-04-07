@@ -94,10 +94,11 @@ export const ActaEntregaDialog = ({ item, tecnicos, asMenuItem = false }) => {
         // Jefe
         pdf.line(20, finalY, 70, finalY)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('ENTREGADO POR (JEFE)', 45, finalY + 4, { align: 'center' })
+        pdf.text('ENTREGADO POR', 45, finalY + 4, { align: 'center' })
         pdf.setFont('helvetica', 'normal')
-        pdf.text(selectedJefe ? selectedJefe.nombre.toUpperCase() : 'N/A', 45, finalY + 8, { align: 'center' })
-        pdf.text(selectedJefe ? selectedJefe.cargo.toUpperCase() : 'N/A', 45, finalY + 12, { align: 'center' })
+        const jefeNombre = selectedJefe ? selectedJefe.nombre.toUpperCase() : 'N/A'
+        const splitText = pdf.splitTextToSize(jefeNombre, 60)
+        pdf.text(splitText, 45, finalY + 8, { align: 'center' })
 
         // Recibido
         pdf.line(140, finalY, 190, finalY)
