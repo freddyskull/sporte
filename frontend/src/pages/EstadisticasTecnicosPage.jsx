@@ -25,11 +25,13 @@ export const EstadisticasTecnicosPage = () => {
 
       historial.forEach(h => {
         const tecnicosAsociados = h.expand?.tecnicos_asociados || []
-        tecnicosAsociados.forEach(t => {
-          if (t.id && t.nombre) {
-            tecnicos.set(t.id, t.nombre)
-          }
-        })
+        tecnicosAsociados
+          .filter(t => !t.cargo?.toUpperCase().includes('JEFE'))
+          .forEach(t => {
+            if (t.id && t.nombre) {
+              tecnicos.set(t.id, t.nombre)
+            }
+          })
 
         // Extract years
         if (h.fecha_soporte) {

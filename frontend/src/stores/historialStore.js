@@ -27,9 +27,11 @@ const useHistorialStore = create((set, get) => ({
       const tecnicoCounts = {};
       records.forEach((record) => {
         if (record.expand?.tecnicos_asociados) {
-          record.expand.tecnicos_asociados.forEach((tecnico) => {
-            tecnicoCounts[tecnico.id] = (tecnicoCounts[tecnico.id] || 0) + 1;
-          });
+          record.expand.tecnicos_asociados
+            .filter(tecnico => !tecnico.cargo?.toUpperCase().includes('JEFE'))
+            .forEach((tecnico) => {
+              tecnicoCounts[tecnico.id] = (tecnicoCounts[tecnico.id] || 0) + 1;
+            });
         }
       });
 

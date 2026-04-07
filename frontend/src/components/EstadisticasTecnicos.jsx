@@ -100,9 +100,11 @@ const EstadisticasTecnicos = () => {
 
     filteredHistorial.forEach(h => {
       const tecnicosAsociados = h.expand?.tecnicos_asociados || []
-      tecnicosAsociados.forEach(t => {
-        tecnicoCount[t.nombre] = (tecnicoCount[t.nombre] || 0) + 1
-      })
+      tecnicosAsociados
+        .filter(t => !t.cargo?.toUpperCase().includes('JEFE'))
+        .forEach(t => {
+          tecnicoCount[t.nombre] = (tecnicoCount[t.nombre] || 0) + 1
+        })
     })
 
     // Sort by value descending for better visualization
