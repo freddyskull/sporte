@@ -109,7 +109,7 @@ const DataTable = ({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-1 shadow-xl border-primary/10" align="end">
+              <PopoverContent className="w-56 p-1 shadow-xl border-primary/10" align="end">
                 <div className="flex flex-col gap-1">
                   {extraActions && (
                     <div className="border-b border-primary/5 pb-1 mb-1">
@@ -360,7 +360,8 @@ const DataTable = ({
                         <div
                           className={cn(
                             "flex items-center gap-2 whitespace-nowrap",
-                            header.column.getCanSort() ? "cursor-pointer select-none" : ""
+                            header.column.getCanSort() ? "cursor-pointer select-none" : "",
+                            header.id === 'actions' ? "justify-end" : ""
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                         >
