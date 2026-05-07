@@ -14,9 +14,7 @@ import { Label } from '@/components/ui/label'
 import { FileDown, Calendar as CalendarIcon, Loader2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import PocketBase from 'pocketbase/cjs'
-
-const pb = new PocketBase("http://127.0.0.1:8090");
+import pb from '../lib/pb'
 
 export const ReporteIndividualDialog = ({ tecnico, asMenuItem = false }) => {
   const [open, setOpen] = useState(false)

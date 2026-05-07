@@ -1,7 +1,5 @@
 import { create } from "zustand";
-import PocketBase from "pocketbase";
-
-const pb = new PocketBase("http://150.187.4.230:8090");
+import pb from "../lib/pb";
 
 const useAsuntosStore = create((set) => ({
   asuntos: [],

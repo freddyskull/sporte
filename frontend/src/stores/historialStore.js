@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import PocketBase from "pocketbase/cjs";
+import pb from "../lib/pb";
 
-const pb = new PocketBase("http://150.187.4.230:8090");
 pb.autoCancellation(false); // Disable auto-cancellation to prevent race conditions
 
 const useHistorialStore = create((set, get) => ({
