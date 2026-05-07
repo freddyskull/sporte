@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import PocketBase from "pocketbase/cjs";
 
-const pb = new PocketBase("http://127.0.0.1:8090");
+const pb = new PocketBase("http://150.187.4.230:8090");
 
 const useTecnicosStore = create((set, get) => ({
   tecnicos: [],
