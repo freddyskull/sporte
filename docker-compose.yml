@@ -1,12 +1,10 @@
 services:
   pocketbase:
-    build:
-      context: ./dbserve
-      dockerfile: Dockerfile
+    image: ghcr.io/muchobien/pocketbase:latest
     ports:
       - "8090:8090"
     volumes:
-      - ./dbserve/pb_data:/pb/pb_data
+      - ./dbserve/pb_data:/pb_data
     restart: unless-stopped
 
   frontend:
@@ -16,7 +14,7 @@ services:
       args:
         - VITE_POCKETBASE_URL=${VITE_POCKETBASE_URL:-http://localhost:8090}
     ports:
-      - "8081:80"
+      - "8082:80"
     depends_on:
       - pocketbase
     restart: unless-stopped
