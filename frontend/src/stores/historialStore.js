@@ -111,7 +111,26 @@ const useHistorialStore = create((set, get) => ({
     console.log("Creating historial with data:", data);
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection("historial").create(data, {
+      let payload = data;
+      const hasFile = Object.values(data).some(v => v instanceof File);
+      if (hasFile) {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+          if (value === null || value === undefined || value === '') return;
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+          } else if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        });
+        payload = formData;
+      }
+
+      const record = await pb.collection("historial").create(payload, {
         expand: "departamento,tecnicos_asociados",
       });
       set((state) => ({
@@ -134,7 +153,26 @@ const useHistorialStore = create((set, get) => ({
     console.log("Updating historial with data:", data);
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection("historial").update(id, data, {
+      let payload = data;
+      const hasFile = Object.values(data).some(v => v instanceof File);
+      if (hasFile) {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+          if (value === null || value === undefined) return;
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+          } else if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        });
+        payload = formData;
+      }
+
+      const record = await pb.collection("historial").update(id, payload, {
         expand: "departamento,tecnicos_asociados",
       });
       set((state) => ({

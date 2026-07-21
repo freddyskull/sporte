@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { X, Filter, Monitor, Search, RotateCcw } from 'lucide-react'
+import { X, Filter, Monitor, Search, RotateCcw, Image as ImageIcon } from 'lucide-react'
+import pb from '../lib/pb'
 import { InformeTecnicoDialog } from '../components/InformeTecnicoDialog'
 import { ActaEntregaDialog } from '../components/ActaEntregaDialog'
 import {
@@ -224,13 +225,34 @@ export const Historial = () => {
     },
     {
       accessorKey: 'descripcion_problema', header: 'Descripción',
-      cell: ({ getValue, row }) => (
-        <EditableCell value={getValue()} id={row.original.id} field="descripcion_problema" type="textarea" onSave={updateHistorial}>
-          <div className="max-w-xs line-clamp-1 text-xs" title={getValue()}>
-            {getValue() || 'N/A'}
+      cell: ({ getValue, row }) => {
+        const foto = row.original.foto
+        const fotoUrl = foto ? pb.files.getUrl(row.original, foto) : null
+
+        return (
+          <div className="flex items-center gap-2">
+            <EditableCell value={getValue()} id={row.original.id} field="descripcion_problema" type="textarea" onSave={updateHistorial}>
+              <div className="max-w-xs line-clamp-1 text-xs" title={getValue()}>
+                {getValue() || 'N/A'}
+              </div>
+            </EditableCell>
+            {fotoUrl && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-6 w-6 p-0 border-blue-200 text-blue-600 hover:bg-blue-50 shrink-0" title="Ver foto adjunta">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2 shadow-lg">
+                  <a href={fotoUrl} target="_blank" rel="noreferrer" title="Abrir imagen completa">
+                    <img src={fotoUrl} alt="Foto adjunta" className="max-h-64 max-w-sm rounded object-contain border shadow-sm hover:opacity-95 transition-opacity" />
+                  </a>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
-        </EditableCell>
-      )
+        )
+      }
     },
     {
       id: 'tecnicos_asociados',

@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { SearchableMultiSelect } from '@/components/ui/SearchableMultiSelect'
+import { X, Image as ImageIcon } from 'lucide-react'
+import pb from '../lib/pb'
 
 const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, onChange, submitLabel = 'Guardar' }) => {
   const [formData, setFormData] = useState(initialData)
@@ -132,14 +134,52 @@ const DataForm = ({ fields, initialData = {}, onSubmit, onCancel, onChange, subm
                       </SelectContent>
                     </Select>
                   ) : field.type === 'file' ? (
-                    <Input
-                      id={field.key}
-                      type="file"
-                      onChange={(e) => handleInputChange(field.key, e.target.files[0])}
-                      accept="image/*"
-                      disabled={isSubmitting}
-                      className="h-9 cursor-pointer file:font-semibold file:text-xs"
-                    />
+                    <div className="flex flex-col gap-2">
+                      {(() => {
+                        const val = getFieldValue(field.key)
+                        let previewUrl = null
+
+                        if (val instanceof File) {
+                          previewUrl = URL.createObjectURL(val)
+                        } else if (typeof val === 'string' && val.trim() !== '') {
+                          previewUrl = pb.files.getUrl(formData, val)
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            {previewUrl && (
+                              <div className="relative inline-block border rounded-lg p-1.5 bg-secondary/30 w-fit">
+                                <img
+                                  src={previewUrl}
+                                  alt="Vista previa"
+                                  className="h-28 w-auto max-w-[240px] object-cover rounded shadow-sm"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleInputChange(field.key, null)}
+                                  className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1 shadow hover:bg-destructive/90 transition-colors"
+                                  title="Quitar imagen"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
+                            <Input
+                              id={field.key}
+                              type="file"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handleInputChange(field.key, e.target.files[0])
+                                }
+                              }}
+                              accept="image/*"
+                              disabled={isSubmitting}
+                              className="h-9 cursor-pointer file:font-semibold file:text-xs text-xs"
+                            />
+                          </div>
+                        )
+                      })()}
+                    </div>
                   ) : field.type === 'textarea' ? (
                     <Textarea
                       id={field.key}

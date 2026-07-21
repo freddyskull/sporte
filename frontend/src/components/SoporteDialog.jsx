@@ -63,6 +63,7 @@ const fields = [
     gridCols: 'md:col-span-1'
   },
   { key: 'descripcion_problema', label: 'Descripción del Problema', type: 'textarea', optional: true, gridCols: 'md:col-span-3' },
+  { key: 'foto', label: 'Foto / Evidencia (Opcional)', type: 'file', optional: true, gridCols: 'md:col-span-3' },
 
   {
     key: 'mostrar_detalles',
