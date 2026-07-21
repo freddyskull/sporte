@@ -116,7 +116,7 @@ const EstadisticasTecnicos = () => {
   const renderPieChart = (chartData) => {
     if (!chartData || chartData.length === 0) {
       return (
-        <div className="flex h-[400px] w-full items-center justify-center text-muted-foreground font-medium uppercase">
+        <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground font-medium uppercase text-xs sm:text-sm">
           No hay datos para mostrar
         </div>
       )
@@ -125,36 +125,50 @@ const EstadisticasTecnicos = () => {
     const total = chartData.reduce((sum, item) => sum + item.value, 0)
 
     return (
-      <ResponsiveContainer width="100%" height={400}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={120}
-            paddingAngle={2}
-            dataKey="value"
-            stroke="none"
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="stroke-background hover:opacity-80 transition-opacity" />
-            ))}
-          </Pie>
-          <Tooltip content={<CustomTooltip total={total} />} />
-          <Legend
-            layout="vertical"
-            verticalAlign="middle"
-            align="right"
-            wrapperStyle={{
-              paddingLeft: "20px",
-              maxHeight: "350px",
-              overflowY: "auto",
-              fontSize: "12px"
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+      <div className="flex flex-col items-center w-full">
+        <div className="h-[240px] sm:h-[280px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={95}
+                paddingAngle={2}
+                dataKey="value"
+                stroke="none"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    className="stroke-background hover:opacity-80 transition-opacity"
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip total={total} />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Legend as responsive badged wrap container */}
+        <div className="flex flex-wrap gap-1.5 justify-center max-h-[110px] overflow-y-auto mt-2 p-1 w-full text-xs">
+          {chartData.map((entry, index) => (
+            <div
+              key={entry.name}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/60 border border-border/50 text-foreground"
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              />
+              <span className="font-medium truncate max-w-[100px]">{entry.name}</span>
+              <span className="text-muted-foreground font-bold ml-0.5">({entry.value})</span>
+            </div>
+          ))}
+        </div>
+      </div>
     )
   }
 

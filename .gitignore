@@ -12,7 +12,11 @@ dist
 dist-ssr
 *.local
 
-# PocketBase
+# PocketBase & Database files
+/dbserve/pb_data/
+*.db
+*.db-wal
+*.db-shm
 /dbserve
 /db
 /frontend/node_modules

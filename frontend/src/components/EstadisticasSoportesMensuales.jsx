@@ -156,42 +156,40 @@ const EstadisticasSoportesMensuales = () => {
     return null
   }
 
-  // Dynamic height calc
-  const dynamicHeight = Math.max(300, data.length * 60)
+  // Dynamic height calc, bounded so it doesn't break dashboard layout
+  const dynamicHeight = Math.min(420, Math.max(260, data.length * 32))
 
   return (
     <Card className="w-full h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex flex-col space-y-1.5">
-          <CardTitle className="uppercase text-foreground text-md uppercase font-bold">Soportes Mensuales</CardTitle>
+      <CardContent className="p-6">
+        <div className="flex flex-row items-center justify-between space-y-0 mb-4">
+          <h2 className="text-lg font-bold uppercase tracking-tight">Soportes Mensuales</h2>
+          {availableYears.length > 0 && (
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[110px] text-xs">
+                <SelectValue placeholder="Año" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year} className="text-xs">
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-        {availableYears.length > 0 && (
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Año" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </CardHeader>
-      <CardContent>
         {data.length > 0 ? (
-          <div style={{ height: `${dynamicHeight}px` }} className="w-full mt-4">
+          <div style={{ height: `${dynamicHeight}px` }} className="w-full overflow-y-auto pr-1">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
                 layout="vertical"
                 margin={{
-                  top: 0,
-                  right: 50,
+                  top: 5,
+                  right: 40,
                   left: 10,
-                  bottom: 0,
+                  bottom: 5,
                 }}
               >
                 <XAxis type="number" hide />
@@ -201,7 +199,7 @@ const EstadisticasSoportesMensuales = () => {
                   width={65}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 12, fill: 'var(--muted-foreground)', fontWeight: 500, textTransform: 'capitalize' }}
+                  tick={{ fontSize: 11, fill: 'var(--muted-foreground)', fontWeight: 500, textTransform: 'capitalize' }}
                 />
                 <Tooltip
                   content={<CustomTooltip />}
@@ -211,7 +209,7 @@ const EstadisticasSoportesMensuales = () => {
                 <Bar
                   dataKey="soportes"
                   radius={[4, 4, 4, 4]}
-                  barSize={24}
+                  barSize={18}
                 >
                   {
                     data.map((entry, index) => (
@@ -223,7 +221,7 @@ const EstadisticasSoportesMensuales = () => {
                     position="right"
                     fill="var(--foreground)"
                     offset={10}
-                    fontSize={14}
+                    fontSize={12}
                     fontWeight="bold"
                   />
                 </Bar>
@@ -231,7 +229,7 @@ const EstadisticasSoportesMensuales = () => {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex h-[300px] w-full items-center justify-center text-slate-400 font-medium uppercase">
+          <div className="flex h-[260px] w-full items-center justify-center text-muted-foreground font-medium uppercase text-xs sm:text-sm">
             No hay datos para este año
           </div>
         )}

@@ -6,32 +6,43 @@ import { Departamentos } from './pages/Departamentos'
 import { Historial } from './pages/Historial'
 import { EstadisticasTecnicosPage } from './pages/EstadisticasTecnicosPage'
 import { Mapa } from './pages/Mapa'
+import { Login } from './pages/Login'
+import { ProtectedRoute } from './components/ProtectedRoute'
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Inicio />,
+    path: "/login",
+    element: <Login />,
   },
   {
-    path: "/tecnicos",
-    element: <Tecnicos />,
-  },
-  {
-    path: "/departamentos",
-    element: <Departamentos />,
-  },
-  {
-    path: "/historial",
-    element: <Historial />,
-  },
-  {
-    path: "/estadisticas-tecnicos",
-    element: <EstadisticasTecnicosPage />,
-  },
-  {
-    path: "/mapa",
-    element: <Mapa />,
-  },
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/",
+        element: <Inicio />,
+      },
+      {
+        path: "/tecnicos",
+        element: <Tecnicos />,
+      },
+      {
+        path: "/departamentos",
+        element: <Departamentos />,
+      },
+      {
+        path: "/historial",
+        element: <Historial />,
+      },
+      {
+        path: "/estadisticas-tecnicos",
+        element: <EstadisticasTecnicosPage />,
+      },
+      {
+        path: "/mapa",
+        element: <Mapa />,
+      },
+    ]
+  }
 ])
 
 export default router

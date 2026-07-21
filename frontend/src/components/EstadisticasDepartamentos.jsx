@@ -241,33 +241,31 @@ const EstadisticasDepartamentos = () => {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <div className="w-full mx-auto">
-          <Tabs defaultValue="semanal" className="w-full">
-            <div className='flex lg:justify-between  flex-col lg:flex-row gap-4 items-center'>
-              <h2 className="text-sm font-bold uppercase text-foreground text-nowrap">Estadísticas departamentos</h2>
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
-                <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
-                <TabsTrigger value="anual">ANUAL</TabsTrigger>
-                <TabsTrigger value="general">GENERAL</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="semanal">
-              {renderAreaChart(data.semanal || {})}
-            </TabsContent>
-            <TabsContent value="mensual">
-              {renderAreaChart(data.mensual || {})}
-            </TabsContent>
-            <TabsContent value="anual">
-              {renderAreaChart(data.anual || {})}
-            </TabsContent>
-            <TabsContent value="general">
-              {renderAreaChart(data.general || {})}
-            </TabsContent>
-          </Tabs>
-        </div>
+    <Card className="h-full">
+      <CardContent className="p-6">
+        <Tabs defaultValue="general" className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-lg font-bold uppercase tracking-tight">Estadísticas Departamentos</h2>
+            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+              <TabsTrigger value="semanal" className="text-xs">SEMANAL</TabsTrigger>
+              <TabsTrigger value="mensual" className="text-xs">MENSUAL</TabsTrigger>
+              <TabsTrigger value="anual" className="text-xs">ANUAL</TabsTrigger>
+              <TabsTrigger value="general" className="text-xs">GENERAL</TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="semanal" className="mt-0">
+            {renderAreaChart(data.semanal || {})}
+          </TabsContent>
+          <TabsContent value="mensual" className="mt-0">
+            {renderAreaChart(data.mensual || {})}
+          </TabsContent>
+          <TabsContent value="anual" className="mt-0">
+            {renderAreaChart(data.anual || {})}
+          </TabsContent>
+          <TabsContent value="general" className="mt-0">
+            {renderAreaChart(data.general || {})}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )

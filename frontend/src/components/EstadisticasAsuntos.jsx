@@ -129,59 +129,63 @@ const EstadisticasAsuntos = () => {
   const renderRadarChart = (chartData) => {
     if (!chartData || chartData.length === 0) {
       return (
-        <div className="flex h-[400px] w-full items-center justify-center text-slate-400 font-medium uppercase">
+        <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground font-medium uppercase text-xs sm:text-sm">
           No hay datos para mostrar
         </div>
       )
     }
 
     return (
-      <ResponsiveContainer width="100%" height={400}>
-        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-          <PolarGrid />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--foreground)', fontSize: 10 }} />
-          <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
-          <Radar
-            name="Soportes"
-            dataKey="count"
-            stroke="#8884d8"
-            fill="#8884d8"
-            fillOpacity={0.6}
-          />
-          <Tooltip content={<CustomTooltip />} />
-        </RadarChart>
-      </ResponsiveContainer>
+      <div className="h-[300px] w-full mt-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="60%" data={chartData}>
+            <PolarGrid stroke="rgba(255,255,255,0.1)" />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={{ fill: 'var(--foreground)', fontSize: 9, fontWeight: 500 }}
+              tickFormatter={(val) => val.length > 15 ? `${val.slice(0, 12)}...` : val}
+            />
+            <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
+            <Radar
+              name="Soportes"
+              dataKey="count"
+              stroke="#8884d8"
+              fill="#8884d8"
+              fillOpacity={0.5}
+            />
+            <Tooltip content={<CustomTooltip />} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardContent>
-        <div className="w-full mx-auto">
-          <Tabs defaultValue="semanal" className="w-full">
-            <div className='flex lg:justify-between flex-col lg:flex-row gap-4 items-center'>
-              <h2 className="text-sm font-bold uppercase text-foreground text-nowrap">Estadísticas por Asunto</h2>
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="semanal">SEMANAL</TabsTrigger>
-                <TabsTrigger value="mensual">MENSUAL</TabsTrigger>
-                <TabsTrigger value="anual">ANUAL</TabsTrigger>
-                <TabsTrigger value="general">GENERAL</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="semanal">
-              {renderRadarChart(data.semanal)}
-            </TabsContent>
-            <TabsContent value="mensual">
-              {renderRadarChart(data.mensual)}
-            </TabsContent>
-            <TabsContent value="anual">
-              {renderRadarChart(data.anual)}
-            </TabsContent>
-            <TabsContent value="general">
-              {renderRadarChart(data.general)}
-            </TabsContent>
-          </Tabs>
-        </div>
+    <Card className="h-full">
+      <CardContent className="p-6">
+        <Tabs defaultValue="general" className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <h2 className="text-lg font-bold uppercase tracking-tight">Estadísticas por Asunto</h2>
+            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+              <TabsTrigger value="semanal" className="text-xs">SEMANAL</TabsTrigger>
+              <TabsTrigger value="mensual" className="text-xs">MENSUAL</TabsTrigger>
+              <TabsTrigger value="anual" className="text-xs">ANUAL</TabsTrigger>
+              <TabsTrigger value="general" className="text-xs">GENERAL</TabsTrigger>
+            </TabsList>
+          </div>
+          <TabsContent value="semanal" className="mt-0">
+            {renderRadarChart(data.semanal)}
+          </TabsContent>
+          <TabsContent value="mensual" className="mt-0">
+            {renderRadarChart(data.mensual)}
+          </TabsContent>
+          <TabsContent value="anual" className="mt-0">
+            {renderRadarChart(data.anual)}
+          </TabsContent>
+          <TabsContent value="general" className="mt-0">
+            {renderRadarChart(data.general)}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )
