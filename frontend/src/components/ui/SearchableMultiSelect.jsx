@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,8 @@ import {
 
 export const SearchableMultiSelect = ({ value, options, onSelect, placeholder }) => {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const inputRef = useRef(null)
 
   // Ensure we always have an array
   const selectedValues = Array.isArray(value) ? value : (value ? [value] : [])
@@ -30,6 +32,10 @@ export const SearchableMultiSelect = ({ value, options, onSelect, placeholder })
       : [...selectedValues, currentValue]
 
     onSelect(newSelectedValues)
+    setSearch("")
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
   }
 
   const handleRemove = (e, valToRemove) => {
@@ -84,7 +90,12 @@ export const SearchableMultiSelect = ({ value, options, onSelect, placeholder })
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder={`Buscar ${placeholder}...`} />
+          <CommandInput
+            ref={inputRef}
+            placeholder={`Buscar ${placeholder}...`}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>No se encontró nada.</CommandEmpty>
             <CommandGroup>
