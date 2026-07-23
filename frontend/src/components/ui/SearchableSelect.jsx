@@ -16,10 +16,22 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+const normalizeText = (text) => {
+  return text
+    ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    : "";
+};
+
 export const SearchableSelect = ({ value, options, onSelect, placeholder }) => {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
   const inputRef = useRef(null)
+
+  const customFilter = (value, search) => {
+    const normalizedValue = normalizeText(value);
+    const normalizedSearch = normalizeText(search);
+    return normalizedValue.includes(normalizedSearch) ? 1 : 0;
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -37,7 +49,7 @@ export const SearchableSelect = ({ value, options, onSelect, placeholder }) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
-        <Command>
+        <Command filter={customFilter}>
           <CommandInput
             ref={inputRef}
             placeholder={`Buscar ${placeholder}...`}
